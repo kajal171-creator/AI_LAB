@@ -1,0 +1,138 @@
+version: 2.1
+
+executors:
+  docker-executor:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/repo
+    resource_class: small
+
+jobs:
+  checkout:
+    executor: docker-executor
+    steps:
+      - checkout:
+          submodules: true
+      - run:
+          name: Configure and Sync Submodules with Credential
+          command: |
+            git config -f .gitmodules submodule.src/shared.url https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/antinolabs/gmr-sm-common-module.git &&
+            git submodule sync &&
+            git submodule update --init --recursive
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Install Node.js and npm
+          command: |
+            sudo apt-get update && sudo apt-get install -y curl
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo bash -
+            sudo apt-get install -y nodejs
+      - run:
+          name: Verify Node.js and npm versions
+          command: |
+            node --version
+            npm --version
+      - run:
+          name: Install Node.js dependencies for the project
+          command: npm install
+
+  build-and-deploy:
+    executor: docker-executor
+    steps:
+      - checkout:
+          submodules: true
+      - run:
+          name: Configure and Sync Submodules with Credentials
+          command: |
+            git config -f .gitmodules submodule.src/shared.url https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/antinolabs/gmr-sm-common-module.git &&
+            git submodule sync &&
+            git submodule update --init --recursive
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Debug Environment Variables
+          command: |
+            echo "GCP_PROJECT_ID=antino-dev"
+            echo "IMAGE_NAME=sm-auth"
+            echo "CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM}"
+      - run:
+          name: Build Docker Image
+          command: |
+            IMAGE="asia-south1-docker.pkg.dev/antino-dev/antino-dev/sm-auth"
+            TAG="${CIRCLE_BUILD_NUM}"
+            echo "Building Docker image: ${IMAGE}"
+            docker build -t ${IMAGE}:latest .
+            echo "Tagging Docker image: ${IMAGE}:${TAG}"
+            docker tag ${IMAGE}:latest ${IMAGE}:${TAG}
+      - run:
+          name: Install Google Cloud SDK and gke-gcloud-auth-plugin
+          command: |
+            curl -L -o google-cloud-sdk-linux-x86_64.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-457.0.0-linux-x86_64.tar.gz
+            tar -xzf google-cloud-sdk-linux-x86_64.tar.gz -C /tmp
+            /tmp/google-cloud-sdk/install.sh --quiet
+            echo 'export PATH=$PATH:/tmp/google-cloud-sdk/bin' >> $BASH_ENV
+            source $BASH_ENV
+            gcloud components install gke-gcloud-auth-plugin
+            gcloud version
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            echo "$GCLOUD_SERVICE_KEY" > ${HOME}/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+            gcloud container clusters get-credentials antino-dev --zone asia-south1 --project antino-dev
+            rm ${HOME}/gcloud-service-key.json
+      - run:
+          name: Push Docker Image to Artifact Registry
+          command: |
+            IMAGE="asia-south1-docker.pkg.dev/antino-dev/antino-dev/sm-auth"
+            TAG="${CIRCLE_BUILD_NUM}"
+            docker push ${IMAGE}:latest
+            docker push ${IMAGE}:${TAG}
+      - run:
+          name: Set Environment Variable for GKE Auth Plugin
+          command: |
+            echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install kubectl
+          command: |
+            curl -LO "https://dl.k8s.io/release/v1.26.4/bin/linux/amd64/kubectl"
+            chmod +x ./kubectl
+            sudo mv ./kubectl /usr/local/bin/kubectl
+            kubectl version --client
+      - run:
+          name: Add SSH Key and Known Hosts
+          command: |
+            mkdir -p ~/.ssh
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan $SSH_HOST >> ~/.ssh/known_hosts
+      - run:
+          name: Deploy to GKE
+          command: |
+            IMAGE="asia-south1-docker.pkg.dev/antino-dev/antino-dev/sm-auth"
+            TAG="${CIRCLE_BUILD_NUM}"
+            DEPLOYMENT_NAME="sm-auth"
+            CONTAINER_NAME="sm-auth"
+            NAMESPACE="sm-auth"
+            ssh $SSH_USER@$SSH_HOST "export KUBECONFIG='/home/$SSH_USER/.kube/config'; \
+            kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE}:${TAG} -n ${NAMESPACE} && \
+            kubectl rollout restart deployment/${DEPLOYMENT_NAME} -n ${NAMESPACE}"
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - checkout:
+          filters:
+            branches:
+              only:
+                - dev
+      - build-and-deploy:
+          requires:
+            - checkout
+          filters:
+            branches:
+              only:
+                - dev

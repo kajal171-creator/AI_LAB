@@ -1,0 +1,33 @@
+export const ResponseMessages = {
+  AUTH: {
+    LOGIN_SUCCESS: 'Login successful',
+    LOGIN_FAILED: 'Invalid credentials',
+    UNAUTHORIZED: 'Unauthorized access',
+    TOKEN_EXPIRED: 'Token has expired',
+  },
+  USER: {
+    CREATED: 'User created successfully',
+    UPDATED: 'User updated successfully',
+    NOT_FOUND: 'User not found',
+    EMAIL_ALREADY_EXISTS: 'Email already exists',
+    USERNAME_ALREADY_EXISTS: 'Username already exists',
+    INVALID_CREDENTIALS: 'Invalid Credentials',
+  },
+  COMMON: {
+    SUCCESS: 'Operation completed successfully',
+    FAILURE: 'Something went wrong',
+    NOT_FOUND: 'Resource not found',
+    FORBIDDEN: 'Access denied',
+  },
+  VALIDATION: {
+    MISSING_FIELDS: 'Required fields are missing',
+    INVALID_INPUT: 'Input data is invalid',
+  },
+  COOKIE: {
+    SET: 'Cookie set successfully',
+    CLEARED: 'Cookie cleared',
+  },
+  HEALTH_CHECK: {
+    HEALTH_CHECK_MESSAGE: 'ANTINO AI BACKEND Service Health Check Route',
+  },
+};
