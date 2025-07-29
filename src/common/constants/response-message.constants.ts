@@ -20,6 +20,7 @@ export const ResponseMessages = {
     FORBIDDEN: 'Access denied',
     IMAGE_GENERATION_SUCCESS: 'Image generated successfully',
     IMAGE_GENERATION_FAILED: 'Image generation failed. Please try again later.',
+    SOMETHING_WENT_WRONG: 'Something Went Wrong',
   },
   VALIDATION: {
     MISSING_FIELDS: 'Required fields are missing',

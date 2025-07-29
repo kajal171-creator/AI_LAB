@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ANTINO AI - Health Check</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .bot {
+        position: relative;
+        animation: float 4s ease-in-out infinite;
+        text-align: center;
+      }
+
+      .bot-face {
+        width: 160px;
+        height: 160px;
+        background: linear-gradient(145deg, #3b82f6, #06b6d4);
+        border-radius: 50%;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        position: relative;
+      }
+
+      .eyes {
+        display: flex;
+        gap: 24px;
+      }
+
+      .eye {
+        width: 22px;
+        height: 22px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 5px #0ff;
+        animation: blink 4s infinite;
+      }
+
+      .speech {
+        margin-top: 20px;
+        padding: 16px 28px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 1.2rem;
+        max-width: 90vw;
+        backdrop-filter: blur(10px);
+        position: relative;
+      }
+
+      .speech::after {
+        content: '';
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 10px;
+        border-style: solid;
+        border-color: transparent transparent rgba(255, 255, 255, 0.08)
+          transparent;
+      }
+
+      .monitor {
+        margin-top: 40px;
+        text-align: center;
+      }
+
+      .monitor h3 {
+        margin-bottom: 10px;
+        color: #38bdf8;
+      }
+
+      .bar-container {
+        margin: 10px auto;
+        width: 300px;
+        background: #1e293b;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+      }
+
+      .bar {
+        height: 20px;
+        background: #22c55e;
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      @keyframes blink {
+        0%,
+        90%,
+        100% {
+          transform: scaleY(1);
+        }
+        95% {
+          transform: scaleY(0.2);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bot">
+      <div class="bot-face">
+        <div class="eyes">
+          <div class="eye"></div>
+          <div class="eye"></div>
+        </div>
+      </div>
+      <div class="speech" id="botSpeech">
+        🤖 ANTINO AI is alive and kicking!
+      </div>
+    </div>
+
+    <div class="monitor">
+      <h3>🧠 System Health Monitor</h3>
+      <div>CPU Usage</div>
+      <div class="bar-container"><div class="bar" id="cpuBar"></div></div>
+      <div>Memory Usage</div>
+      <div class="bar-container"><div class="bar" id="memoryBar"></div></div>
+    </div>
+
+    <script>
+      const messages = [
+        '🤖 ANTINO AI is alive and kicking!',
+        '🩺 All systems operational.',
+        "⚡ I'm feeling electric today!",
+        '📡 Ping response: Excellent!',
+        '🔋 Energy level: 9000+',
+        '🧠 AI logic fully charged!',
+      ];
+      let index = 0;
+      const speech = document.getElementById('botSpeech');
+
+      setInterval(() => {
+        index = (index + 1) % messages.length;
+        speech.textContent = messages[index];
+      }, 4000);
+
+      function simulateUsage(barId, max = 80) {
+        const usage = Math.floor(Math.random() * max + 10);
+        document.getElementById(barId).style.width = usage + '%';
+      }
+
+      setInterval(() => {
+        simulateUsage('cpuBar', 80);
+        simulateUsage('memoryBar', 70);
+      }, 2000);
+    </script>
+  </body>
+</html>

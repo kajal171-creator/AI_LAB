@@ -8,7 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { ClientType } from '../constants/constants';
+import { CLIENT_TYPE } from '../constants/constants';
 import { JwtHelper } from '../helpers/jwt.helper';
 
 @Injectable()
@@ -24,9 +24,9 @@ export class ClientAuthGuard implements CanActivate {
     const clientType = request.headers['x-client-type'] as string;
     let token: string | undefined;
 
-    if (clientType === ClientType.WEB) {
+    if (clientType === CLIENT_TYPE.WEB) {
       token = request.cookies?.['accessToken'];
-    } else if (clientType === ClientType.APP) {
+    } else if (clientType === CLIENT_TYPE.APP) {
       const authHeader = request.headers['authorization'];
       if (authHeader?.startsWith('Bearer ')) {
         token = authHeader.split(' ')[1];

@@ -12,7 +12,7 @@ import { Response } from 'express';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { ClientType, NODE_ENV } from 'src/common/constants/constants';
+import { CLIENT_TYPE, NODE_ENV } from 'src/common/constants/constants';
 import { ResponseMessages } from 'src/common/constants/response-message.constants';
 import { ClientTypeValidationPipe } from 'src/common/pipes/client-validation.pipe';
 import { ClientAuthGuard } from 'src/common/guards/client-auth.guard';
@@ -31,7 +31,7 @@ export class UsersController {
 
     let response;
     const accessToken = await this.usersService.register(registerDto);
-    if (clientType === ClientType.WEB) {
+    if (clientType === CLIENT_TYPE.WEB) {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === NODE_ENV.PROD,
@@ -59,7 +59,7 @@ export class UsersController {
 
     let response;
     const { accessToken } = await this.usersService.login(loginDto);
-    if (clientType === ClientType.WEB) {
+    if (clientType === CLIENT_TYPE.WEB) {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === NODE_ENV.PROD,

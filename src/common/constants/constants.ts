@@ -1,6 +1,11 @@
-export const ClientType = {
+export const CLIENT_TYPE = {
   WEB: 'web',
   APP: 'app',
+};
+
+export const RESPONSE_STATUS = {
+  SUCCESS: 'success',
+  FAILURE: 'failure',
 };
 
 export const NODE_ENV = {
@@ -8,3 +13,8 @@ export const NODE_ENV = {
   STAGING: 'staging',
   PROD: 'production',
 } as const;
+
+export const UPLOAD_STRATEGY = {
+  ON_PREM: 'on-prem',
+  AWS: 'gcp',
+};
