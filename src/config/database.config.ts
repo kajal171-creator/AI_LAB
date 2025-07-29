@@ -1,6 +1,8 @@
 import { registerAs } from '@nestjs/config';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
+console.log('Using DB username:', process.env.DB_USERNAME);
+
 export default registerAs(
   'dbConfig',
   (): PostgresConnectionOptions => ({
@@ -9,9 +11,10 @@ export default registerAs(
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
     username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
+    password: String(process.env.DB_PASSWORD),
     database: process.env.DB_DATABASE,
     logging: process.env.NODE_ENV == 'dev' ? 'all' : undefined,
     synchronize: process.env.NODE_ENV == 'dev' ? true : false,
+    
   }),
 );

@@ -18,6 +18,8 @@ export const ResponseMessages = {
     FAILURE: 'Something went wrong',
     NOT_FOUND: 'Resource not found',
     FORBIDDEN: 'Access denied',
+    IMAGE_GENERATION_SUCCESS: 'Image generated successfully',
+    IMAGE_GENERATION_FAILED: 'Image generation failed. Please try again later.',
   },
   VALIDATION: {
     MISSING_FIELDS: 'Required fields are missing',
