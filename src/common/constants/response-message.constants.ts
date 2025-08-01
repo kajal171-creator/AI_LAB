@@ -33,4 +33,15 @@ export const ResponseMessages = {
   HEALTH_CHECK: {
     HEALTH_CHECK_MESSAGE: 'ANTINO AI BACKEND Service Health Check Route',
   },
+
+  RAG: {
+  FILE_UPLOADED: 'PDF file uploaded successfully',
+  MESSAGE_CREATED: 'Chat created successfully',
+  MESSAGE_SAVED: 'Chat message saved successfully',
+  CONVERSATION_NOT_FOUND: 'Conversation not found',
+  GET_CONVERSATION: 'Conversation retrieved successfully',
+  DELETE_CONVERSATION: 'Conversation deleted successfully',
+  CONVERSATION_CREATED: 'Conversation created successfully',
+}
+
 };
