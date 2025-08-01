@@ -16,5 +16,5 @@ export const NODE_ENV = {
 
 export const UPLOAD_STRATEGY = {
   ON_PREM: 'on-prem',
-  AWS: 'gcp',
+  AWS: 'aws',
 };
