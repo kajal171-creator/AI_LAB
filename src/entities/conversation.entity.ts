@@ -1,5 +1,5 @@
 import { BaseEntity } from 'src/common/database/sm-base.entity';
-import { Column, Entity, ManyToMany } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { User } from './user.entity';
 import { ManyToOne, JoinColumn } from 'typeorm';
 import { Message } from './message.entity';
@@ -26,6 +26,10 @@ export class Conversation extends BaseEntity {
   @ManyToMany(() => Knowledge, (knowledge) => knowledge.conversations, {
     cascade: true,
   })
-  @JoinColumn({ name: 'knowledge_id' })
+  @JoinTable({
+    name: 'conversation_knowledge',
+    joinColumn: { name: 'conversation_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'knowledge_id', referencedColumnName: 'id' },
+  })
   knowledge: Knowledge[];
 }
