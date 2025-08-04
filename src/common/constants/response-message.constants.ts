@@ -18,6 +18,9 @@ export const ResponseMessages = {
     FAILURE: 'Something went wrong',
     NOT_FOUND: 'Resource not found',
     FORBIDDEN: 'Access denied',
+    IMAGE_GENERATION_SUCCESS: 'Image generated successfully',
+    IMAGE_GENERATION_FAILED: 'Image generation failed. Please try again later.',
+    SOMETHING_WENT_WRONG: 'Something Went Wrong',
   },
   VALIDATION: {
     MISSING_FIELDS: 'Required fields are missing',
@@ -30,4 +33,15 @@ export const ResponseMessages = {
   HEALTH_CHECK: {
     HEALTH_CHECK_MESSAGE: 'ANTINO AI BACKEND Service Health Check Route',
   },
+
+  RAG: {
+  FILE_UPLOADED: 'PDF file uploaded successfully',
+  MESSAGE_CREATED: 'Chat created successfully',
+  MESSAGE_SAVED: 'Chat message saved successfully',
+  CONVERSATION_NOT_FOUND: 'Conversation not found',
+  GET_CONVERSATION: 'Conversation retrieved successfully',
+  DELETE_CONVERSATION: 'Conversation deleted successfully',
+  CONVERSATION_CREATED: 'Conversation created successfully',
+}
+
 };

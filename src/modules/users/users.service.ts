@@ -25,24 +25,13 @@ export class UsersService {
   }
   async register(registerDto: RegisterUserDto): Promise<string> {
     const email = registerDto.email.toLowerCase();
-    const username = registerDto.username;
 
-    const [emailExists, userNameExists] = await Promise.all([
-      this.findUser({
-        where: { email, role: UserRole.USER },
-      }),
-      this.findUser({
-        where: { username },
-      }),
-    ]);
+    const emailExists = await this.findUser({
+      where: { email, role: UserRole.USER },
+    });
+
     if (emailExists) {
       throw new BadRequestException(ResponseMessages.USER.EMAIL_ALREADY_EXISTS);
-    }
-
-    if (userNameExists) {
-      throw new BadRequestException(
-        ResponseMessages.USER.USERNAME_ALREADY_EXISTS,
-      );
     }
 
     const hashedPassword = await BcryptHelper.hash(registerDto.password);
@@ -61,12 +50,10 @@ export class UsersService {
   }
 
   async login(loginDto: LoginUserDto): Promise<{ accessToken: string }> {
-    const { email, username, password } = loginDto;
+    const { email, password } = loginDto;
 
-    const identifier = email?.toLowerCase() || username;
-    const whereClause = email
-      ? { email: identifier }
-      : { username: identifier };
+    const identifier = email?.toLowerCase();
+    const whereClause = { email: identifier };
 
     whereClause['role'] = UserRole.USER;
 

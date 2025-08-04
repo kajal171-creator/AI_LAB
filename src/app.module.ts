@@ -5,6 +5,7 @@ import dbConfig from './config/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
+import { FeaturesModule } from './modules/features/features.module';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { SuccessResponseInterceptor } from './common/interceptors/response.interceptor';
@@ -22,6 +23,7 @@ import jwtConfig from './config/jwt.config';
       useFactory: dbConfig,
     }),
     UsersModule,
+    FeaturesModule,
   ],
   controllers: [AppController],
   providers: [

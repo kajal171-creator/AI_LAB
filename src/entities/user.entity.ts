@@ -5,7 +5,6 @@ import { Entity, Column } from 'typeorm';
 @Entity('users')
 export class User extends BaseEntity {
   @Column({
-    unique: true,
     length: 30,
     nullable: false,
   })
