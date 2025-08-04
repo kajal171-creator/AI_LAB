@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Conversation } from '../../../entities/conversation.entity';
 import { Message } from '../../../entities/message.entity';
 import { User } from '../../../entities/user.entity';
@@ -26,17 +26,19 @@ export class RagChatbotService {
     title: string,
     userId: string,
     //knowledges?: string[],
-  ): Promise<Conversation> {
+  ): Promise<{ message: string }> {
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
       if (!user) {
         throw new BadRequestException(ResponseMessages.USER.NOT_FOUND);
       }
 
-        // let knowledge: Knowledge[] = [];
-        // if (knowledges?.length) {
-        //   knowledge = await this.knowledgeRepository.findByIds(knowledges);
-        // }
+      // let knowledge: Knowledge[] = [];
+      // if (knowledges?.length) {
+      //   knowledge = await this.knowledgeRepository.find({
+      //     where: { id: In(knowledges) },
+      //   });
+      // }
 
       const conversation = this.conversationRepository.create({
         title,
@@ -44,14 +46,20 @@ export class RagChatbotService {
         //knowledge,
       });
 
-      const newConversation = this.conversationRepository.save(conversation);
-      return newConversation;
+      await this.conversationRepository.save(conversation);
+
+      return {
+        message: ResponseMessages.RAG.CONVERSATION_CREATED,
+      };
     } catch (error) {
       console.error('Error creating conversation:', error);
+      throw error;
     }
   }
 
-  async getConversations(userId: string): Promise<Conversation[]> {
+  async getConversations(
+    userId: string,
+  ): Promise<{ message: string; conversations: Conversation[] }> {
     try {
       const user = await this.userRepository.findOne({
         where: { id: userId },
@@ -68,9 +76,10 @@ export class RagChatbotService {
         },
       });
 
-      return conversations;
+      return { message: ResponseMessages.RAG.GET_CONVERSATION, conversations };
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      throw error;
     }
   }
 
@@ -92,7 +101,7 @@ export class RagChatbotService {
         where: { id: conversationId },
       });
       if (!conversation) {
-        throw new BadRequestException('Conversation not found');
+        throw new BadRequestException(ResponseMessages.CONVERSATION.NOT_FOUND);
       }
 
       const newMessage = this.messageRepository.create({
@@ -100,7 +109,7 @@ export class RagChatbotService {
         user,
         conversation,
       });
-      const savedMessage = this.messageRepository.save(newMessage);
+      const savedMessage = await this.messageRepository.save(newMessage);
 
       return savedMessage;
     } catch (error) {
@@ -111,57 +120,78 @@ export class RagChatbotService {
   async uploadPdf(
     files: Express.Multer.File[],
     //conversationId?: string,
-  ): Promise<Knowledge> {
+  ): Promise<{ message: string; knowledge: Knowledge[] }> {
     try {
-      if (!files) {
+      if (!files || (Array.isArray(files) && files.length === 0)) {
         throw new BadRequestException('No file uploaded');
       }
-      
-      const savedKnowledge: Knowledge[] = [];
 
-      for(const file of files){
-      if (file.mimetype !== 'application/pdf') {
-        throw new BadRequestException('Only PDF files are allowed');
+      const maxFileSize = 10 * 1024 * 1024;
+      const validFiles = files.filter((file) => {
+        return file.mimetype === 'application/pdf' && file.size <= maxFileSize;
+      });
+
+      if (validFiles.length === 0) {
+        throw new BadRequestException(
+          'No valid PDF files uploaded or file size exceeds 10 MB',
+        );
       }
 
-      const fileUrl = await this.uploaderService.upload(file.buffer);
+      const uploadedPdf = validFiles.map((file) =>
+        this.uploaderService.upload(file.buffer),
+      );
 
-      const knowledge = this.knowledgeRepository.create({
-        url: fileUrl,
-      });
+      const uploadedPdfUrls = await Promise.all(uploadedPdf);
+
+      const pdfFiles = uploadedPdfUrls.map((url) =>
+        this.knowledgeRepository.create({ url }),
+      );
+
+      const savedKnowledge = await this.knowledgeRepository.save(pdfFiles);
 
       // if (conversationId) {
       //   const conversation = await this.conversationRepository.findOne({
       //     where: { id: conversationId },
+      //     relations: ['knowledge'],
       //   });
       //   if (!conversation) {
-      //     throw new BadRequestException('Conversation not found');
+      //     throw new BadRequestException(
+      //       ResponseMessages.CONVERSATION.NOT_FOUND,
+      //     );
       //   }
-      //   knowledge.conversations = [conversation];
+
+      //   conversation.knowledge.push(...savedKnowledge);
+      //   await this.conversationRepository.save(conversation);
       // }
 
-      return await this.knowledgeRepository.save(knowledge);
-    }}
-     catch (error) {
+      return {
+        message: ResponseMessages.RAG.FILE_UPLOADED,
+        knowledge: savedKnowledge,
+      };
+    } catch (error) {
       console.error('Error uploading PDF:', error);
+      throw error;
     }
   }
 
   async deleteConversation(
     conversationId: string,
     userId: string,
-  ): Promise<void> {
+  ): Promise<{ message: string }> {
     try {
       const conversation = await this.conversationRepository.findOne({
         where: { id: conversationId, user: { id: userId } },
       });
       if (!conversation) {
-        throw new BadRequestException('Conversation not found');
+        throw new BadRequestException(ResponseMessages.CONVERSATION.NOT_FOUND);
       }
 
       await this.conversationRepository.remove(conversation);
+
+      return { message: ResponseMessages.RAG.DELETE_CONVERSATION };
     } catch (error) {
       console.error('Error deleting conversation:', error);
+      throw error;
     }
   }
 }

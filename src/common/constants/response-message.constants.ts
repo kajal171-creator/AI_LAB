@@ -13,6 +13,11 @@ export const ResponseMessages = {
     USERNAME_ALREADY_EXISTS: 'Username already exists',
     INVALID_CREDENTIALS: 'Invalid Credentials',
   },
+  CONVERSATION: {
+    CREATED: 'Conversation created successfully',
+    NOT_FOUND: 'Conversation not found',
+    DELETED: 'Conversation deleted successfully',
+  },
   COMMON: {
     SUCCESS: 'Operation completed successfully',
     FAILURE: 'Something went wrong',
