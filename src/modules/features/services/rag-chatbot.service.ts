@@ -109,14 +109,17 @@ export class RagChatbotService {
   }
 
   async uploadPdf(
-    file: Express.Multer.File,
+    files: Express.Multer.File[],
     //conversationId?: string,
   ): Promise<Knowledge> {
     try {
-      if (!file) {
+      if (!files) {
         throw new BadRequestException('No file uploaded');
       }
+      
+      const savedKnowledge: Knowledge[] = [];
 
+      for(const file of files){
       if (file.mimetype !== 'application/pdf') {
         throw new BadRequestException('Only PDF files are allowed');
       }
@@ -138,7 +141,8 @@ export class RagChatbotService {
       // }
 
       return await this.knowledgeRepository.save(knowledge);
-    } catch (error) {
+    }}
+     catch (error) {
       console.error('Error uploading PDF:', error);
     }
   }

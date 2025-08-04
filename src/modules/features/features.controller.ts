@@ -4,7 +4,7 @@ import { CreateRagChatDto } from './dto/rag-chat.dto';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { CreateKnowledgeDto } from './dto/create-knowledge.dto';
 import { UseInterceptors,UploadedFile } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes,ApiBody} from '@nestjs/swagger';
 import { ResponseMessages } from 'src/common/constants/response-message.constants';
 import { UseGuards } from '@nestjs/common';
@@ -48,13 +48,13 @@ export class FeaturesController {
 
   @UseGuards(ClientAuthGuard)
   @Post('upload-pdf')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiBody({schema: {type: 'object',properties: {file: { type: 'string',format: 'binary',},},},})
+  @ApiBody({schema: {type: 'object',properties: {files: { type: 'array', items: {type: 'string', format: 'binary',},},},},})
   @ApiResponse({ status: 201, description: ResponseMessages.RAG.FILE_UPLOADED })
   async uploadPdf(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() files: Express.Multer.File[],
   ) {
-    return this.ragChatService.uploadPdf(file);
+    return this.ragChatService.uploadPdf(files);
   }
 }
