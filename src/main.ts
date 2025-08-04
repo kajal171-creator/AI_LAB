@@ -51,20 +51,12 @@ async function bootstrap() {
     .setDescription('ANTINO AI APIs')
     .setVersion('1.0')
     .addTag('antino-ai')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'Authorization',
-        in: 'header',
-      },
-      'accessToken',
-    )
     .addCookieAuth('accessToken', {
       type: 'apiKey',
       in: 'cookie',
     })
+    .addBearerAuth()
+
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('antino-ai/api', app, document);

@@ -1,10 +1,16 @@
 import { BaseEntity } from 'src/common/database/sm-base.entity';
-import { Column, Entity, ManyToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  ManyToMany,
+  JoinColumn,
+  JoinTable,
+} from 'typeorm';
 import { User } from './user.entity';
-import { ManyToOne, JoinColumn } from 'typeorm';
 import { Message } from './message.entity';
 import { Knowledge } from './knowledge.entity';
-import { OneToMany } from 'typeorm';
 
 @Entity('rag_conversations')
 export class Conversation extends BaseEntity {
@@ -18,6 +24,10 @@ export class Conversation extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'ai_user_id' })
+  aiUser: User;
+
   @OneToMany(() => Message, (message) => message.conversation, {
     cascade: true,
   })
@@ -26,6 +36,10 @@ export class Conversation extends BaseEntity {
   @ManyToMany(() => Knowledge, (knowledge) => knowledge.conversations, {
     cascade: true,
   })
-  @JoinColumn({ name: 'knowledge_id' })
+  @JoinTable({
+    name: 'conversation_knowledge_map',
+    joinColumn: { name: 'conversation_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'knowledge_id', referencedColumnName: 'id' },
+  })
   knowledge: Knowledge[];
 }

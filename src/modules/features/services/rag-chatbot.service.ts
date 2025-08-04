@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Conversation } from '../../../entities/conversation.entity';
 import { Message } from '../../../entities/message.entity';
 import { User } from '../../../entities/user.entity';
 import { Knowledge } from 'src/entities/knowledge.entity';
 import { ResponseMessages } from 'src/common/constants/response-message.constants';
 import { UploaderService } from '../../../common/helpers/uplaod.helper';
+import { CreateConversationDto } from '../dto/create-conversation.dto';
+import { UserRole } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class RagChatbotService {
@@ -23,124 +25,156 @@ export class RagChatbotService {
   ) {}
 
   async createConversation(
-    title: string,
+    body: CreateConversationDto,
     userId: string,
-    //knowledges?: string[],
-  ): Promise<Conversation> {
+  ): Promise<string> {
     try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const [ai, user, allKnowledge] = await Promise.all([
+        this.userRepository.findOne({ where: { role: UserRole.AI } }),
+        this.userRepository.findOne({ where: { id: userId } }),
+        this.knowledgeRepository.findBy({
+          id: In(body.knowledge),
+          userId,
+        }),
+      ]);
       if (!user) {
         throw new BadRequestException(ResponseMessages.USER.NOT_FOUND);
       }
 
-        // let knowledge: Knowledge[] = [];
-        // if (knowledges?.length) {
-        //   knowledge = await this.knowledgeRepository.findByIds(knowledges);
-        // }
+      if (allKnowledge.length !== body.knowledge.length) {
+        const foundIds = new Set(allKnowledge.map((k) => k.id));
+        const missingIds = body.knowledge.filter((id) => !foundIds.has(id));
+        throw new BadRequestException(
+          `Invalid knowledge IDs: ${missingIds.join(', ')}`,
+        );
+      }
 
       const conversation = this.conversationRepository.create({
-        title,
+        title: body.title,
+        aiUser: ai,
         user,
-        //knowledge,
+        knowledge: allKnowledge,
       });
 
-      const newConversation = this.conversationRepository.save(conversation);
-      return newConversation;
+      await this.conversationRepository.save(conversation);
+
+      return conversation.id;
     } catch (error) {
       console.error('Error creating conversation:', error);
     }
   }
 
-  async getConversations(userId: string): Promise<Conversation[]> {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-      });
-      if (!user) {
-        throw new BadRequestException(ResponseMessages.USER.NOT_FOUND);
-      }
-      const conversations = await this.conversationRepository.find({
-        where: { user: { id: userId } },
-        relations: ['messages', 'knowledge', 'user'],
-        order: {
-          createdAt: 'DESC',
-          messages: { createdAt: 'ASC' },
-        },
-      });
+  // async getConversations(userId: string): Promise<Conversation[]> {
+  //   try {
+  //     const user = await this.userRepository.findOne({
+  //       where: { id: userId },
+  //     });
+  //     if (!user) {
+  //       throw new BadRequestException(ResponseMessages.USER.NOT_FOUND);
+  //     }
+  //     const conversations = await this.conversationRepository.find({
+  //       where: { user: { id: userId } },
+  //       relations: ['messages', 'knowledge', 'user'],
+  //       order: {
+  //         createdAt: 'DESC',
+  //         messages: { createdAt: 'ASC' },
+  //       },
+  //     });
 
-      return conversations;
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
+  //     return conversations;
+  //   } catch (error) {
+  //     console.error('Error fetching conversations:', error);
+  //   }
+  // }
+
+  // // Create Message
+  // async createMessage(
+  //   conversationId: string,
+  //   senderId: string,
+  //   content: string,
+  // ): Promise<void> {
+  //   try {
+  //     const [aiUser, user] = await Promise.all([
+  //       this.userRepository.findOne({ where: { role: UserRole.AI } }),
+  //       this.userRepository.findOne({
+  //         where: { id: senderId },
+  //       }),
+  //     ]);
+  //     if (!user) {
+  //       throw new BadRequestException(ResponseMessages.USER.NOT_FOUND);
+  //     }
+
+  //     const conversation = await this.conversationRepository.findOne({
+  //       where: { id: conversationId },
+  //       relations: ['knowledge'],
+  //     });
+  //     if (!conversation) {
+  //       throw new BadRequestException('Conversation not found');
+  //     }
+  //     const urls = conversation.knowledge.map((k) => k.url);
+
+  //     const payload = {
+  //       knowledge: urls,
+  //       content,
+  //     };
+
+  //     const newMessage = this.messageRepository.create({
+  //       content,
+  //       senderId,
+  //       receiverId: aiUser.id,
+  //       conversation,
+  //     });
+
+  //     const agentMessage = this.messageRepository.create({
+  //       receiverId: aiUser.id,
+  //       senderId,
+  //       conversation,
+  //     });
+  //   } catch (error) {
+  //     console.error('Error creating message:', error);
+  //   }
+  // }
+
+  async uploadPdf(files: Express.Multer.File[], userId): Promise<Knowledge[]> {
+    if (!files || !files.length) {
+      throw new BadRequestException('No files uploaded');
     }
-  }
 
-  // Create Message
-  async createMessage(
-    conversationId: string,
-    senderId: string,
-    content: string,
-  ): Promise<Message> {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { id: senderId },
-      });
-      if (!user) {
-        throw new BadRequestException(ResponseMessages.USER.NOT_FOUND);
-      }
-
-      const conversation = await this.conversationRepository.findOne({
-        where: { id: conversationId },
-      });
-      if (!conversation) {
-        throw new BadRequestException('Conversation not found');
-      }
-
-      const newMessage = this.messageRepository.create({
-        content,
-        user,
-        conversation,
-      });
-      const savedMessage = this.messageRepository.save(newMessage);
-
-      return savedMessage;
-    } catch (error) {
-      console.error('Error creating message:', error);
-    }
-  }
-
-  async uploadPdf(
-    file: Express.Multer.File,
-    //conversationId?: string,
-  ): Promise<Knowledge> {
-    try {
-      if (!file) {
-        throw new BadRequestException('No file uploaded');
-      }
-
+    const uploadInputs = files.map((file) => {
       if (file.mimetype !== 'application/pdf') {
-        throw new BadRequestException('Only PDF files are allowed');
+        throw new BadRequestException(
+          `Only PDF files are allowed: ${file.originalname}`,
+        );
       }
 
-      const fileUrl = await this.uploaderService.upload(file.buffer);
+      return {
+        buffer: file.buffer,
+        fileName: file.originalname,
+        contentType: file.mimetype,
+      };
+    });
 
-      const knowledge = this.knowledgeRepository.create({
-        url: fileUrl,
-      });
+    const uploadedUrls = await Promise.all(
+      uploadInputs.map(({ buffer, contentType, fileName }) =>
+        this.uploaderService.upload(buffer, {
+          mimetype: contentType,
+          fileName,
+          folder: 'pdfs',
+        }),
+      ),
+    );
 
-      // if (conversationId) {
-      //   const conversation = await this.conversationRepository.findOne({
-      //     where: { id: conversationId },
-      //   });
-      //   if (!conversation) {
-      //     throw new BadRequestException('Conversation not found');
-      //   }
-      //   knowledge.conversations = [conversation];
-      // }
+    const knowledgeEntities = uploadedUrls.map((url, index) =>
+      this.knowledgeRepository.create({
+        url,
+        userId,
+      }),
+    );
 
-      return await this.knowledgeRepository.save(knowledge);
-    } catch (error) {
-      console.error('Error uploading PDF:', error);
-    }
+    await Promise.all(
+      knowledgeEntities.map((entity) => this.knowledgeRepository.save(entity)),
+    );
+    return null;
   }
 
   async deleteConversation(
@@ -159,5 +193,12 @@ export class RagChatbotService {
     } catch (error) {
       console.error('Error deleting conversation:', error);
     }
+  }
+
+  async getAllKnowledge(userId): Promise<Knowledge[]> {
+    return await this.knowledgeRepository.find({
+      where: { userId },
+      select: ['id', 'url', 'createdAt', 'updatedAt'],
+    });
   }
 }
