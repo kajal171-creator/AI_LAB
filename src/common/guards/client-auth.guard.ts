@@ -11,6 +11,7 @@ import { Request } from 'express';
 import { CLIENT_TYPE } from '../constants/constants';
 import { JwtHelper } from '../helpers/jwt.helper';
 
+
 @Injectable()
 export class ClientAuthGuard implements CanActivate {
   constructor(

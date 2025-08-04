@@ -6,14 +6,35 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ImageGenerationHistory } from 'src/entities/image-generation.history.entity';
 import { AiAgentApiService } from '../http-service/http-service.service';
 import { UploaderService } from 'src/common/helpers/uplaod.helper';
-import { RagChatService } from './services/rag-chatbot.service';
-import { RagChat} from 'src/entities/rag-chat.entity';
-import { Conversation } from 'src/entities/rag-conversation.entity';
-import { Knowledge } from 'src/entities/rag-knowledge.entity';
+import { RagChatbotService } from './services/rag-chatbot.service';
+import { Message } from 'src/entities/Message.entity';
+import { Conversation } from 'src/entities/conversation.entity';
+import { Knowledge } from 'src/entities/knowledge.entity';
+import { User } from 'src/entities/user.entity';
+import { JwtModule } from '@nestjs/jwt';
+import { ClientAuthGuard } from 'src/common/guards/client-auth.guard';
+import { JwtHelper } from 'src/common/helpers/jwt.helper';
 
 @Module({
-  imports: [HttpModule, TypeOrmModule.forFeature([ImageGenerationHistory,RagChat,Conversation,Knowledge])],
+  imports: [
+    HttpModule,
+    JwtModule.register({}),
+    TypeOrmModule.forFeature([
+      User,
+      ImageGenerationHistory,
+      Message,
+      Conversation,
+      Knowledge,
+    ]),
+  ],
   controllers: [FeaturesController],
-  providers: [ImageGeneratorService, AiAgentApiService, UploaderService, RagChatService],
+  providers: [
+    ImageGeneratorService,
+    AiAgentApiService,
+    UploaderService,
+    RagChatbotService,
+    ClientAuthGuard, 
+    JwtHelper,       
+  ],
 })
 export class FeaturesModule {}

@@ -1,5 +1,5 @@
 import {Body,Controller,Delete,Get,Param,Post,HttpCode, HttpStatus} from '@nestjs/common';
-import { RagChatService } from './services/rag-chatbot.service';
+import { RagChatbotService } from './services/rag-chatbot.service';
 import { CreateRagChatDto } from './dto/rag-chat.dto';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { CreateKnowledgeDto } from './dto/create-knowledge.dto';
@@ -7,38 +7,46 @@ import { UseInterceptors,UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes,ApiBody} from '@nestjs/swagger';
 import { ResponseMessages } from 'src/common/constants/response-message.constants';
+import { UseGuards } from '@nestjs/common';
+import { ClientAuthGuard } from 'src/common/guards/client-auth.guard';
 
 
 @ApiTags('RAG Chatbot')
 @Controller('chat')
 export class FeaturesController {
-  constructor(private readonly ragChatService: RagChatService) {}
+  constructor(private readonly ragChatService: RagChatbotService) {}
 
+  @UseGuards(ClientAuthGuard)
   @Post('message')
-  @ApiResponse({ status: 201, description: ResponseMessages.RAG.MESSAGE_CREATED })
   async createMessage(@Body() createDto: CreateRagChatDto) {
-    return this.ragChatService.createMessage(createDto);
-  }
+  const { conversationId, senderId, content } = createDto;
+  return this.ragChatService.createMessage(conversationId, senderId, content);
+}
 
-  @Post('conversation')
-  @ApiResponse({ status: 201, description: ResponseMessages.RAG.MESSAGE_CREATED })
-  async createConversation(@Body() body: { userId: string }) {
-    return this.ragChatService.createConversation(body.userId);
-  }
+  @UseGuards(ClientAuthGuard)
+ @Post('conversation')
+  async createConversation(@Body() body: { userId: string; title: string }) {
+  return this.ragChatService.createConversation(body.title, body.userId);
+}
 
+  @UseGuards(ClientAuthGuard)
   @Get('conversation')
   @ApiResponse({ status: 200, description: ResponseMessages.RAG.GET_CONVERSATION})
   async getMessages(@Param('id') userId: string) {
-    return this.ragChatService.getConversation(userId);
+    return this.ragChatService.getConversations(userId);
   }
 
+  
+  @UseGuards(ClientAuthGuard)
   @Delete('conversation/:id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiResponse({ status: 200, description: ResponseMessages.RAG.DELETE_CONVERSATION })
-  async deleteConversation(@Param('id') conversationId: string) {
-    return this.ragChatService.deleteConversation(conversationId);
-  }
+  async deleteConversation(
+  @Param('id') conversationId: string,
+  @Body() body: { userId: string },
+) {
+  return this.ragChatService.deleteConversation(conversationId, body.userId);
+}
 
+  @UseGuards(ClientAuthGuard)
   @Post('upload-pdf')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')

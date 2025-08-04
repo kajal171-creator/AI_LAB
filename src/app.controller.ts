@@ -30,9 +30,9 @@ export class AppController {
     });
   }
 
-  @All('*')
-  @ApiExcludeEndpoint()
-  handleUnknownRoutes(@Req() req: Request, @Res() res: Response) {
-    throw new NotFoundException();
-  }
+  // @All('*')
+  // @ApiExcludeEndpoint()
+  // handleUnknownRoutes(@Req() req: Request, @Res() res: Response) {
+  //   throw new NotFoundException();
+  // }
 }
