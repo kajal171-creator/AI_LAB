@@ -20,7 +20,18 @@ async function bootstrap() {
   app.useGlobalFilters(new NotFoundExceptionFilter());
 
   app.enableCors({
-    origin: '*',
+    origin: (origin, callback) => {
+      const allowedOrigins = ['http://localhost:4000'];
+      const domainSuffix = '.antino.ca';
+
+      if (!origin) return callback(null, false);
+
+      if (allowedOrigins.includes(origin) || origin.endsWith(domainSuffix)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('CORS: Not allowed'), false);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -51,20 +62,12 @@ async function bootstrap() {
     .setDescription('ANTINO AI APIs')
     .setVersion('1.0')
     .addTag('antino-ai')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'Authorization',
-        in: 'header',
-      },
-      'accessToken',
-    )
     .addCookieAuth('accessToken', {
       type: 'apiKey',
       in: 'cookie',
     })
+    .addBearerAuth()
+
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('antino-ai/api', app, document);

@@ -11,7 +11,6 @@ import { Request } from 'express';
 import { CLIENT_TYPE } from '../constants/constants';
 import { JwtHelper } from '../helpers/jwt.helper';
 
-
 @Injectable()
 export class ClientAuthGuard implements CanActivate {
   constructor(
@@ -24,7 +23,6 @@ export class ClientAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const clientType = request.headers['x-client-type'] as string;
     let token: string | undefined;
-
     if (clientType === CLIENT_TYPE.WEB) {
       token = request.cookies?.['accessToken'];
     } else if (clientType === CLIENT_TYPE.APP) {

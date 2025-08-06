@@ -34,4 +34,34 @@ export class AiAgentApiService {
       throw error;
     }
   }
+
+  // This method is for chatting with a PDF document
+  async chatWithPdf(message: string, pdfUrl: string): Promise<string> {
+    const pythonBackendUrl = process.env.PYTHON_PDF_CHAT_API_URL;
+
+    try {
+      const response: AxiosResponse = await lastValueFrom(
+        this.httpService.post(pythonBackendUrl, {
+          message,
+          pdf_url: pdfUrl,
+        }),
+      );
+
+      if (response.data.status !== RESPONSE_STATUS.SUCCESS) {
+        throw new InternalServerErrorException(
+          ResponseMessages.COMMON.SOMETHING_WENT_WRONG,
+        );
+      }
+
+      const aiResponse = response.data.response;
+
+      return aiResponse;
+    } catch (error) {
+      console.error(
+        'Error calling Python backend:',
+        error?.response?.data || error.message,
+      );
+      throw error;
+    }
+  }
 }
