@@ -64,6 +64,8 @@ export class UsersController {
         httpOnly: true,
         secure: process.env.NODE_ENV === NODE_ENV.PROD,
         sameSite: 'lax',
+        domain:
+          process.env.NODE_ENV === NODE_ENV.PROD ? '.antino.ca' : undefined,
       });
       response = {
         message: ResponseMessages.AUTH.LOGIN_SUCCESS,

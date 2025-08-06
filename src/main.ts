@@ -20,7 +20,18 @@ async function bootstrap() {
   app.useGlobalFilters(new NotFoundExceptionFilter());
 
   app.enableCors({
-    origin: '*',
+    origin: (origin, callback) => {
+      const allowedOrigins = ['http://localhost:4000'];
+      const domainSuffix = '.antino.ca';
+
+      if (!origin) return callback(null, false);
+
+      if (allowedOrigins.includes(origin) || origin.endsWith(domainSuffix)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('CORS: Not allowed'), false);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
