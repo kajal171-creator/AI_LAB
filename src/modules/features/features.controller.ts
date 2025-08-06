@@ -1,3 +1,5 @@
+<<<<<<< Updated upstream
+=======
 import {
   Body,
   Controller,
@@ -28,7 +30,9 @@ import { UseGuards } from '@nestjs/common';
 import { ClientAuthGuard } from 'src/common/guards/client-auth.guard';
 import { JwtHelper } from 'src/common/helpers/jwt.helper';
 import { Knowledge } from 'src/entities/knowledge.entity';
+import { Conversation } from 'src/entities/conversation.entity';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @ApiTags('RAG Chatbot')
 @Controller('chat')
@@ -53,6 +57,22 @@ export class FeaturesController {
     return this.ragChatService.createConversation(body, req['user'].id);
   }
 
+
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @Get('all-conversation')
+  @ApiResponse({
+    status: 200,
+    description: 'List of all conversation documents',
+    type: [Conversation],
+  })
+  async listAllConversations(
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+  ): Promise<Conversation[]> {
+    return this.ragChatService.getAllConversations(req['user'].id);
+  }
+
   // @UseGuards(ClientAuthGuard)
   // @Get('conversation')
   // @ApiResponse({
@@ -62,6 +82,17 @@ export class FeaturesController {
   // async getMessages(@Param('id') userId: string) {
   //   return this.ragChatService.getConversations(userId);
   // }
+
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @Post('message')
+  async createMessage(
+    @Body() body: CreateMessageDto,
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+  ): Promise<string> {
+    return this.ragChatService.createMessage(body, req['user'].id);
+  }
 
   // @UseGuards(ClientAuthGuard)
   // @Delete('conversation/:id')
@@ -118,3 +149,4 @@ export class FeaturesController {
     return this.ragChatService.getAllKnowledge(req['user'].id);
   }
 }
+>>>>>>> Stashed changes

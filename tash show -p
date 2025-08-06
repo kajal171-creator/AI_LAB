@@ -1,0 +1,191 @@
+[1mdiff --git a/src/common/guards/client-auth.guard.ts b/src/common/guards/client-auth.guard.ts[m
+[1mindex ae973e6..791d973 100644[m
+[1m--- a/src/common/guards/client-auth.guard.ts[m
+[1m+++ b/src/common/guards/client-auth.guard.ts[m
+[36m@@ -11,7 +11,6 @@[m [mimport { Request } from 'express';[m
+ import { CLIENT_TYPE } from '../constants/constants';[m
+ import { JwtHelper } from '../helpers/jwt.helper';[m
+ [m
+[31m-[m
+ @Injectable()[m
+ export class ClientAuthGuard implements CanActivate {[m
+   constructor([m
+[36m@@ -24,7 +23,6 @@[m [mexport class ClientAuthGuard implements CanActivate {[m
+     const request = context.switchToHttp().getRequest<Request>();[m
+     const clientType = request.headers['x-client-type'] as string;[m
+     let token: string | undefined;[m
+[31m-[m
+     if (clientType === CLIENT_TYPE.WEB) {[m
+       token = request.cookies?.['accessToken'];[m
+     } else if (clientType === CLIENT_TYPE.APP) {[m
+[1mdiff --git a/src/common/helpers/uplaod.helper.ts b/src/common/helpers/uplaod.helper.ts[m
+[1mindex 6891772..ce2fd04 100644[m
+[1m--- a/src/common/helpers/uplaod.helper.ts[m
+[1m+++ b/src/common/helpers/uplaod.helper.ts[m
+[36m@@ -3,6 +3,7 @@[m [mimport * as path from 'path';[m
+ import * as fs from 'fs';[m
+ import { v4 as uuid } from 'uuid';[m
+ import { UPLOAD_STRATEGY } from '../constants/constants';[m
+[32m+[m[32mimport * as mime from 'mime-types';[m
+ [m
+ export class UploaderService {[m
+   private readonly strategy: string;[m
+[36m@@ -20,27 +21,57 @@[m [mexport class UploaderService {[m
+         },[m
+       });[m
+     }[m
+[32m+[m
+[32m+[m[32m    if (this.strategy === UPLOAD_STRATEGY.ON_PREM) {[m
+[32m+[m[32m      this.s3Client = new S3Client({[m
+[32m+[m[32m        region: 'us-east-1',[m
+[32m+[m[32m        endpoint: process.env.MINIO_ENDPOINT,[m
+[32m+[m[32m        forcePathStyle: true,[m
+[32m+[m[32m        credentials: {[m
+[32m+[m[32m          accessKeyId: process.env.MINIO_ACCESS_KEY,[m
+[32m+[m[32m          secretAccessKey: process.env.MINIO_SECRET_KEY,[m
+[32m+[m[32m        },[m
+[32m+[m[32m      });[m
+[32m+[m[32m    }[m
+   }[m
+ [m
+[31m-  async upload(buffer: Buffer): Promise<string> {[m
+[32m+[m[32m  async upload([m
+[32m+[m[32m    buffer: Buffer,[m
+[32m+[m[32m    options?: {[m
+[32m+[m[32m      mimetype?: string;[m
+[32m+[m[32m      fileName?: string;[m
+[32m+[m[32m      folder?: string;[m
+[32m+[m[32m    },[m
+[32m+[m[32m  ): Promise<string> {[m
+[32m+[m[32m    const mimeType = options?.mimetype || 'application/octet-stream';[m
+[32m+[m[32m    const extension = mime.extension(mimeType) || 'bin';[m
+[32m+[m[32m    const fileName = options?.fileName || `${uuid()}.${extension}`;[m
+[32m+[m[32m    const folder = options?.folder || 'uploads';[m
+[32m+[m
+     switch (this.strategy) {[m
+       case UPLOAD_STRATEGY.AWS:[m
+[31m-        return this.uploadToS3(buffer);[m
+[32m+[m[32m        return this.uploadToS3(buffer, fileName, folder, mimeType);[m
+       case UPLOAD_STRATEGY.ON_PREM:[m
+[31m-        return this.uploadToLocal(buffer);[m
+[32m+[m[32m        return this.uploadToLocal(buffer, fileName, folder);[m
+       default:[m
+         throw new Error(`Unknown UPLOAD_STRATEGY: ${this.strategy}`);[m
+     }[m
+   }[m
+ [m
+[31m-  private async uploadToS3(buffer: Buffer): Promise<string> {[m
+[31m-    const key = `images/${uuid()}.png`;[m
+[32m+[m[32m  private async uploadToS3([m
+[32m+[m[32m    buffer: Buffer,[m
+[32m+[m[32m    fileName: string,[m
+[32m+[m[32m    folder: string,[m
+[32m+[m[32m    contentType: string,[m
+[32m+[m[32m  ): Promise<string> {[m
+[32m+[m[32m    const key = `${folder}/${fileName}`;[m
+ [m
+     const command = new PutObjectCommand({[m
+       Bucket: process.env.AWS_S3_BUCKET,[m
+       Key: key,[m
+       Body: buffer,[m
+[31m-      ContentType: 'image/png',[m
+[32m+[m[32m      // ACL: 'public-read',[m
+[32m+[m[32m      ContentType: contentType,[m
+     });[m
+ [m
+     await this.s3Client.send(command);[m
+[36m@@ -48,20 +79,31 @@[m [mexport class UploaderService {[m
+     return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;[m
+   }[m
+ [m
+[31m-  private async uploadToLocal(buffer: Buffer): Promise<string> {[m
+[31m-    const filename = `${uuid()}.png`;[m
+[31m-    // TODO: HAVE TO PROVISION FOR UPLOADING FILE TO ON PREM[m
+[32m+[m[32m  private async uploadToLocal([m
+[32m+[m[32m    buffer: Buffer,[m
+[32m+[m[32m    fileName: string,[m
+[32m+[m[32m    folder: string,[m
+[32m+[m[32m  ): Promise<string> {[m
+[32m+[m[32m    const key = `${folder}/${fileName}`;[m
+[32m+[m[32m    const bucket = process.env.MINIO_BUCKET;[m
+ [m
+[31m-    // const uploadPath = path.join(__dirname, '../../uploads/images');[m
+[32m+[m[32m    if (!this.s3Client) {[m
+[32m+[m[32m      throw new Error('S3 client not initialized');[m
+[32m+[m[32m    }[m
+ [m
+[31m-    // if (!fs.existsSync(uploadPath)) {[m
+[31m-    //   fs.mkdirSync(uploadPath, { recursive: true });[m
+[31m-    // }[m
+[32m+[m[32m    const contentType = mime.lookup(fileName) || 'application/octet-stream';[m
+ [m
+[31m-    // const filePath = path.join(uploadPath, filename);[m
+[31m-    // fs.writeFileSync(filePath, buffer);[m
+[32m+[m[32m    const command = new PutObjectCommand({[m
+[32m+[m[32m      Bucket: bucket,[m
+[32m+[m[32m      Key: key,[m
+[32m+[m[32m      Body: buffer,[m
+[32m+[m[32m      ACL: 'public-read',[m
+[32m+[m
+[32m+[m[32m      ContentType: contentType,[m
+[32m+[m[32m    });[m
+[32m+[m
+[32m+[m[32m    await this.s3Client.send(command);[m
+ [m
+[31m-    // // You can customize the URL path if serving files statically via Express[m
+[31m-    return `on-prem-uploaded-url`;[m
+[32m+[m[32m    return `${process.env.MINIO_ENDPOINT}/${bucket}/${key}`;[m
+   }[m
+ }[m
+[1mdiff --git a/src/entities/conversation.entity.ts b/src/entities/conversation.entity.ts[m
+[1mindex 0b0839b..b123f97 100644[m
+[1m--- a/src/entities/conversation.entity.ts[m
+[1m+++ b/src/entities/conversation.entity.ts[m
+[36m@@ -1,10 +1,16 @@[m
+ import { BaseEntity } from 'src/common/database/sm-base.entity';[m
+[31m-import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';[m
+[32m+[m[32mimport {[m
+[32m+[m[32m  Column,[m
+[32m+[m[32m  Entity,[m
+[32m+[m[32m  ManyToOne,[m
+[32m+[m[32m  OneToMany,[m
+[32m+[m[32m  ManyToMany,[m
+[32m+[m[32m  JoinColumn,[m
+[32m+[m[32m  JoinTable,[m
+[32m+[m[32m} from 'typeorm';[m
+ import { User } from './user.entity';[m
+[31m-import { ManyToOne, JoinColumn } from 'typeorm';[m
+ import { Message } from './message.entity';[m
+ import { Knowledge } from './knowledge.entity';[m
+[31m-import { OneToMany } from 'typeorm';[m
+ [m
+ @Entity('rag_conversations')[m
+ export class Conversation extends BaseEntity {[m
+[36m@@ -18,6 +24,10 @@[m [mexport class Conversation extends BaseEntity {[m
+   @JoinColumn({ name: 'user_id' })[m
+   user: User;[m
+ [m
+[32m+[m[32m  @ManyToOne(() => User)[m
+[32m+[m[32m  @JoinColumn({ name: 'ai_user_id' })[m
+[32m+[m[32m  aiUser: User;[m
+[32m+[m
+   @OneToMany(() => Message, (message) => message.conversation, {[m
+     cascade: true,[m
+   })[m
+[36m@@ -27,7 +37,7 @@[m [mexport class Conversation extends BaseEntity {[m
+     cascade: true,[m
+   })[m
+   @JoinTable({[m
+[31m-    name: 'conversation_knowledge',[m
+[32m+[m[32m    name: 'conversation_knowledge_map',[m
+     joinColumn: { name: 'conversation_id', referencedColumnName: 'id' },[m
+     inverseJoinColumn: { name: 'knowledge_id', referencedColumnName: 'id' },[m
+   })[m
+[1mdiff --git a/src/entities/knowledge.entity.ts b/src/entities/knowledge.entity.ts[m
+[1mindex 593fa88..61d459e 100644[m
+[1m--- a/src/entities/knowledge.entity.ts[m
+[1m+++ b/src/entities/knowledge.entity.ts[m
+[36m@@ -1,7 +1,7 @@[m
+[31m-import { Entity, ManyToMany } from 'typeorm';[m
+[32m+[m[32mimport { Entity, Column, ManyToMany, ManyToOne, JoinColumn } from 'typeorm';[m
+ import { BaseEntity } from 'src/common/database/sm-base.en

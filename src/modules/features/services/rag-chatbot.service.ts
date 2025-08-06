@@ -9,7 +9,8 @@ import { ResponseMessages } from 'src/common/constants/response-message.constant
 import { UploaderService } from '../../../common/helpers/uplaod.helper';
 import { CreateConversationDto } from '../dto/create-conversation.dto';
 import { UserRole } from 'src/common/enums/role.enum';
-
+import { CreateMessageDto } from '../dto/create-message.dto';
+import { AiAgentApiService } from 'src/modules/http-service/http-service.service';
 @Injectable()
 export class RagChatbotService {
   constructor(
@@ -22,8 +23,10 @@ export class RagChatbotService {
     @InjectRepository(Knowledge)
     private readonly knowledgeRepository: Repository<Knowledge>,
     private readonly uploaderService: UploaderService,
+    private readonly aiAgentApiService: AiAgentApiService,
   ) {}
 
+  // Create Conversation
   async createConversation(
     body: CreateConversationDto,
     userId: string,
@@ -61,6 +64,87 @@ export class RagChatbotService {
       return conversation.id;
     } catch (error) {
       console.error('Error creating conversation:', error);
+      throw error;
+    }
+  }
+
+  // Get All Conversations
+  async getAllConversations(userId): Promise<Conversation[]> {
+    return await this.conversationRepository.find({
+      where: { user: { id: userId } },
+      select: ['id', 'title', 'createdAt', 'updatedAt'],
+    });
+  }
+
+  // Create Message
+  async createMessage(body: CreateMessageDto, userId: string): Promise<string> {
+    try {
+      const [ai, user, allKnowledge, conversation] = await Promise.all([
+        this.userRepository.findOne({ where: { role: UserRole.AI } }),
+        this.userRepository.findOne({ where: { id: userId } }),
+        this.knowledgeRepository.findBy({
+          id: In(body.knowledge),
+          userId,
+        }),
+        this.conversationRepository.findOne({
+          where: {
+            id: body.conversation,
+            user: { id: userId },
+          },
+        }),
+      ]);
+      if (!user) {
+        throw new BadRequestException(ResponseMessages.USER.NOT_FOUND);
+      }
+
+      if (allKnowledge.length !== body.knowledge.length) {
+        const foundIds = new Set(allKnowledge.map((k) => k.id));
+        const missingIds = body.knowledge.filter((id) => !foundIds.has(id));
+        throw new BadRequestException(
+          `Invalid knowledge IDs: ${missingIds.join(', ')}`,
+        );
+      }
+
+      if (!conversation) {
+        throw new BadRequestException(
+          'Conversation not found or does not belong to the user',
+        );
+      }
+
+      const message = this.messageRepository.create({
+        content: body.content,
+        senderId: user.id,
+        receiverId: ai.id,
+        conversation: { id: conversation.id },
+        user,
+      });
+
+      await this.messageRepository.save(message);
+
+      // Below logic is for AI response generation
+      const firstPdfUrl = allKnowledge[0]?.url;
+      if (!firstPdfUrl) {
+        throw new BadRequestException('No PDF URL found for AI processing');
+      }
+
+      const aiResponse = await this.aiAgentApiService.chatWithPdf(
+        body.content,
+        firstPdfUrl,
+      );
+
+      const aiMessage = this.messageRepository.create({
+        content: aiResponse,
+        senderId: ai.id,
+        receiverId: user.id,
+        conversation: { id: conversation.id },
+        user,
+      });
+      await this.messageRepository.save(aiMessage);
+
+      return message.id;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
     }
   }
 
@@ -135,6 +219,7 @@ export class RagChatbotService {
   //   }
   // }
 
+  // Upload PDF
   async uploadPdf(files: Express.Multer.File[], userId): Promise<Knowledge[]> {
     if (!files || !files.length) {
       throw new BadRequestException('No files uploaded');
@@ -177,23 +262,34 @@ export class RagChatbotService {
     return null;
   }
 
+  // Delete Conversation
   async deleteConversation(
     conversationId: string,
     userId: string,
-  ): Promise<void> {
+  ): Promise<{ message: string }> {
     try {
       const conversation = await this.conversationRepository.findOne({
         where: { id: conversationId, user: { id: userId } },
       });
       if (!conversation) {
-        throw new BadRequestException('Conversation not found');
+        throw new BadRequestException(ResponseMessages.CONVERSATION.NOT_FOUND);
       }
 
       await this.conversationRepository.remove(conversation);
+
+      return { message: ResponseMessages.RAG.DELETE_CONVERSATION };
     } catch (error) {
       console.error('Error deleting conversation:', error);
+      throw error;
     }
   }
+
+  // async getAllKnowledge(userId): Promise<Knowledge[]> {
+  //   return await this.knowledgeRepository.find({
+  //     where: { userId },
+  //     select: ['id', 'url', 'createdAt', 'updatedAt'],
+  //   });
+  // }
 
   async getAllKnowledge(userId): Promise<Knowledge[]> {
     return await this.knowledgeRepository.find({
