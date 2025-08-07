@@ -111,6 +111,16 @@ export class RagChatbotService {
         );
       }
 
+      // Below logic is for AI response generation
+      const firstPdfUrl = allKnowledge[0]?.url;
+      if (!firstPdfUrl) {
+        throw new BadRequestException('No PDF URL found for AI processing');
+      }
+      console.log('>>>>', firstPdfUrl);
+      const aiResponse = await this.aiAgentApiService.chatWithPdf(
+        body.content,
+        firstPdfUrl,
+      );
       const message = this.messageRepository.create({
         content: body.content,
         senderId: user.id,
@@ -119,19 +129,6 @@ export class RagChatbotService {
         user,
       });
 
-      await this.messageRepository.save(message);
-
-      // Below logic is for AI response generation
-      const firstPdfUrl = allKnowledge[0]?.url;
-      if (!firstPdfUrl) {
-        throw new BadRequestException('No PDF URL found for AI processing');
-      }
-
-      const aiResponse = await this.aiAgentApiService.chatWithPdf(
-        body.content,
-        firstPdfUrl,
-      );
-
       const aiMessage = this.messageRepository.create({
         content: aiResponse,
         senderId: ai.id,
@@ -139,9 +136,11 @@ export class RagChatbotService {
         conversation: { id: conversation.id },
         user,
       });
-      await this.messageRepository.save(aiMessage);
-
-      return message.id;
+      Promise.all([
+        this.messageRepository.save(message),
+        this.messageRepository.save(aiMessage),
+      ]);
+      return aiResponse;
     } catch (error) {
       console.error('Error creating conversation:', error);
       throw error;
@@ -284,13 +283,7 @@ export class RagChatbotService {
     }
   }
 
-  // async getAllKnowledge(userId): Promise<Knowledge[]> {
-  //   return await this.knowledgeRepository.find({
-  //     where: { userId },
-  //     select: ['id', 'url', 'createdAt', 'updatedAt'],
-  //   });
-  // }
-
+  // Get All Knowledge
   async getAllKnowledge(userId): Promise<Knowledge[]> {
     return await this.knowledgeRepository.find({
       where: { userId },

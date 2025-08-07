@@ -4,6 +4,10 @@ import { AxiosResponse } from 'axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ResponseMessages } from 'src/common/constants/response-message.constants';
 import { RESPONSE_STATUS } from 'src/common/constants/constants';
+import axios from 'axios';
+import * as FormData from 'form-data';
+import { response } from 'express';
+const PYTHON_PDF_CHAT_API = 'https://4ljdz2qw-8000.inc1.devtunnels.ms/chat/';
 
 @Injectable()
 export class AiAgentApiService {
@@ -35,33 +39,33 @@ export class AiAgentApiService {
     }
   }
 
-  // This method is for chatting with a PDF document
-  async chatWithPdf(message: string, pdfUrl: string): Promise<string> {
-    const pythonBackendUrl = process.env.PYTHON_PDF_CHAT_API_URL;
+  async chatWithPdf(prompt: string, fileName: string): Promise<string> {
+    const payload = {
+      query: prompt,
+      files: [fileName], // Match key in Python file_map.json
+    };
 
+    console.log('Payload for chatWithPdf:', payload);
     try {
-      const response: AxiosResponse = await lastValueFrom(
-        this.httpService.post(pythonBackendUrl, {
-          message,
-          pdf_url: pdfUrl,
-        }),
+      const response = await lastValueFrom(
+        this.httpService.post(
+          'https://4ljdz2qw-8000.inc1.devtunnels.ms/chat/',
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
       );
-
-      if (response.data.status !== RESPONSE_STATUS.SUCCESS) {
-        throw new InternalServerErrorException(
-          ResponseMessages.COMMON.SOMETHING_WENT_WRONG,
-        );
-      }
-
-      const aiResponse = response.data.response;
-
-      return aiResponse;
+    
+      return response.data.answer;
     } catch (error) {
       console.error(
-        'Error calling Python backend:',
-        error?.response?.data || error.message,
+        'Error in chatWithPdf:',
+        error.response?.data || error.message,
       );
-      throw error;
+      throw new InternalServerErrorException('AI chat with PDF failed');
     }
   }
 }

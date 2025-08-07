@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 import { Module } from '@nestjs/common';
 import { FeaturesController } from './features.controller';
 import { ImageGeneratorService } from './services/image-generator.service';

@@ -24,7 +24,6 @@ export class ClientAuthGuard implements CanActivate {
     const clientType = request.headers['x-client-type'] as string;
     let token: string | undefined;
     if (clientType === CLIENT_TYPE.WEB) {
->>>>>>> Stashed changes
       token = request.cookies?.['accessToken'];
     } else if (clientType === CLIENT_TYPE.APP) {
       const authHeader = request.headers['authorization'];

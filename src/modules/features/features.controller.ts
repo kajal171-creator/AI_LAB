@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 import {
   Body,
   Controller,
@@ -149,4 +147,3 @@ export class FeaturesController {
     return this.ragChatService.getAllKnowledge(req['user'].id);
   }
 }
->>>>>>> Stashed changes

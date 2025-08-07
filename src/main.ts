@@ -21,7 +21,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      const allowedOrigins = ['http://localhost:4000'];
+      const allowedOrigins = ['http://localhost:4000', 'http://localhost:3000'];
       const domainSuffix = '.antino.ca';
 
       if (!origin) return callback(null, false);
