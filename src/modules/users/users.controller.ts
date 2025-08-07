@@ -34,8 +34,10 @@ export class UsersController {
     if (clientType === CLIENT_TYPE.WEB) {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === NODE_ENV.PROD,
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
+        domain:
+          process.env.NODE_ENV === NODE_ENV.PROD ? '.antino.ca' : undefined,
       });
       response = {
         message: ResponseMessages.AUTH.LOGIN_SUCCESS,
@@ -62,8 +64,8 @@ export class UsersController {
     if (clientType === CLIENT_TYPE.WEB) {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === NODE_ENV.PROD,
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         domain:
           process.env.NODE_ENV === NODE_ENV.PROD ? '.antino.ca' : undefined,
       });
