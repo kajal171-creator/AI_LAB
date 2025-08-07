@@ -18,3 +18,5 @@ export const UPLOAD_STRATEGY = {
   ON_PREM: 'on-prem',
   AWS: 'aws',
 };
+
+export const ORIGINS = ['http://localhost:4000', 'http://localhost:3000'];

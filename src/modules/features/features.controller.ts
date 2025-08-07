@@ -140,7 +140,7 @@ export class FeaturesController {
     description: 'List of all knowledge documents',
     type: [Knowledge],
   })
-  async listAllKnowledges(
+  async listAllKnowledge(
     @Req() req: Request,
     @Headers('x-client-type') clientType: string,
   ): Promise<Knowledge[]> {
