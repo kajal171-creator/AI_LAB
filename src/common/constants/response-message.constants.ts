@@ -4,6 +4,7 @@ export const ResponseMessages = {
     LOGIN_FAILED: 'Invalid credentials',
     UNAUTHORIZED: 'Unauthorized access',
     TOKEN_EXPIRED: 'Token has expired',
+    LOGOUT_SUCCESS: 'Logged out successfully',
   },
   USER: {
     CREATED: 'User created successfully',
@@ -12,6 +13,11 @@ export const ResponseMessages = {
     EMAIL_ALREADY_EXISTS: 'Email already exists',
     USERNAME_ALREADY_EXISTS: 'Username already exists',
     INVALID_CREDENTIALS: 'Invalid Credentials',
+  },
+  CONVERSATION: {
+    CREATED: 'Conversation created successfully',
+    NOT_FOUND: 'Conversation not found',
+    DELETED: 'Conversation deleted successfully',
   },
   COMMON: {
     SUCCESS: 'Operation completed successfully',
@@ -35,13 +41,12 @@ export const ResponseMessages = {
   },
 
   RAG: {
-  FILE_UPLOADED: 'PDF file uploaded successfully',
-  MESSAGE_CREATED: 'Chat created successfully',
-  MESSAGE_SAVED: 'Chat message saved successfully',
-  CONVERSATION_NOT_FOUND: 'Conversation not found',
-  GET_CONVERSATION: 'Conversation retrieved successfully',
-  DELETE_CONVERSATION: 'Conversation deleted successfully',
-  CONVERSATION_CREATED: 'Conversation created successfully',
-}
-
+    FILE_UPLOADED: 'PDF file uploaded successfully',
+    MESSAGE_CREATED: 'Chat created successfully',
+    MESSAGE_SAVED: 'Chat message saved successfully',
+    CONVERSATION_NOT_FOUND: 'Conversation not found',
+    GET_CONVERSATION: 'Conversation retrieved successfully',
+    DELETE_CONVERSATION: 'Conversation deleted successfully',
+    CONVERSATION_CREATED: 'Conversation created successfully',
+  },
 };

@@ -10,7 +10,6 @@ import {
 import { ValidationError } from 'class-validator';
 import * as cookieParser from 'cookie-parser';
 import { NotFoundExceptionFilter } from './common/filters/not-found.filter';
-import { ORIGINS } from './common/constants/constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,7 +21,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      const allowedOrigins = ORIGINS;
+      const allowedOrigins = ['http://localhost:4000', 'http://localhost:3000'];
       const domainSuffix = '.antino.ca';
 
       if (!origin) return callback(null, false);
