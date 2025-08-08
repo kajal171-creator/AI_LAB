@@ -13,6 +13,13 @@ export class Knowledge extends BaseEntity {
   url: string;
 
   @Column({
+    type: 'varchar',
+    nullable: true,
+    name: 'file_name',
+  })
+  fileName: string;
+
+  @Column({
     type: 'uuid',
     name: 'user_id',
     nullable: false,

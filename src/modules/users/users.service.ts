@@ -92,4 +92,11 @@ export class UsersService {
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
   }
+
+  async getUserById(userId: string): Promise<User> {
+    return await this.userRepository.findOne({
+      where: { id: userId },
+      select: { username: true, email: true, avatar: true },
+    });
+  }
 }
