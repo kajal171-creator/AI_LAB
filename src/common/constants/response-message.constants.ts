@@ -40,6 +40,10 @@ export const ResponseMessages = {
     HEALTH_CHECK_MESSAGE: 'ANTINO AI BACKEND Service Health Check Route',
   },
 
+  Translation: {
+    TRANSLATION_ERROR: 'AI translation failed',
+  },
+
   RAG: {
     FILE_UPLOADED: 'PDF file uploaded successfully',
     MESSAGE_CREATED: 'Chat created successfully',

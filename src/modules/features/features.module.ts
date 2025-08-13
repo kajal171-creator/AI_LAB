@@ -15,6 +15,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ClientAuthGuard } from 'src/common/guards/client-auth.guard';
 import { JwtHelper } from 'src/common/helpers/jwt.helper';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TranslatorService } from './services/translator.service';
+import { Translation } from 'src/entities/translation.entity';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       Message,
       Conversation,
       Knowledge,
+      Translation,
     ]),
   ],
   controllers: [FeaturesController],
@@ -45,6 +48,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     RagChatbotService,
     ClientAuthGuard,
     JwtHelper,
+    TranslatorService
   ],
 })
 export class FeaturesModule {}
