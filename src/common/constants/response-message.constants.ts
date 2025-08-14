@@ -42,6 +42,7 @@ export const ResponseMessages = {
 
   Translation: {
     TRANSLATION_ERROR: 'AI translation failed',
+    NOT_FOUND: 'Translation not found for this user',
   },
 
   RAG: {

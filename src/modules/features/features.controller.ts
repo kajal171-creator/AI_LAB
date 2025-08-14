@@ -166,7 +166,7 @@ export class FeaturesController {
     );
   }
 
-// TRANSLATOR ENDPOINTS =============================================================================
+  // TRANSLATOR ENDPOINTS =============================================================================
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
   @Post('translate')
@@ -191,5 +191,22 @@ export class FeaturesController {
     @Headers('x-client-type') clientType: string,
   ): Promise<Translation[]> {
     return this.ragTranslatorService.getTranslations(req['user'].id);
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  async deleteTranslation(
+    @Param('id') translationId: string,
+    @Req() req: Request,
+  ) {
+    const updatedTranslationList = await this.ragTranslatorService.deleteTranslationById(
+      req['user'].id,
+      translationId,
+    );
+    return {
+      message: 'Translation deleted successfully',
+      translations: updatedTranslationList,
+    };
   }
 }

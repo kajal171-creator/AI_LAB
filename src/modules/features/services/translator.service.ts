@@ -43,7 +43,7 @@ export class TranslatorService {
       );
 
       if (!translatedText) {
-        throw new InternalServerErrorException(ResponseMessages.Translation.TRANSLATION_ERROR);
+        throw new BadRequestException(ResponseMessages.Translation.TRANSLATION_ERROR);
       }
       console.log('Translated Text:---------- ', translatedText);
     
@@ -76,5 +76,27 @@ export class TranslatorService {
       console.error('Error fetching translations:', error);
       throw error;
     }
+  }
+
+  async deleteTranslationById(translationId: string, userId: string): Promise<Translation[]> {
+    try {
+      const translation = await this.translationRepository.findOne({
+      where: { id: translationId, user: { id: userId } },
+    });
+
+    if (!translation) {
+      throw new BadRequestException(ResponseMessages.Translation.NOT_FOUND);
+    }
+
+    await this.translationRepository.remove(translation);
+
+    return await this.translationRepository.find({
+      where: { user: { id: userId } },
+      order: { createdAt: 'ASC' },
+    });
+    } catch (error) {
+      console.error('Error deleting translation:', error);
+      throw error;
+    } 
   }
 }

@@ -106,14 +106,14 @@ export class AiAgentApiService {
   }
 
   async translateText(
-    originalText: string,
+    text: string,
     sourceLanguage: string,
     targetLanguage: string,
     style: string,
     userId: string,
   ): Promise<string> {
     const payload = {
-      originalText,
+      text,
       sourceLanguage,
       targetLanguage,
       style,
