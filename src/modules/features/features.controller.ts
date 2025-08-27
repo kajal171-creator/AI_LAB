@@ -10,6 +10,8 @@ import {
   HttpStatus,
   UploadedFiles,
   Req,
+  BadRequestException,
+  Res
 } from '@nestjs/common';
 import { RagChatbotService } from './services/rag-chatbot.service';
 import { CreateRagChatDto } from './dto/rag-chat.dto';
@@ -18,6 +20,7 @@ import {
   ApiResponse,
   ApiSecurity,
   ApiBearerAuth,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateKnowledgeDto } from './dto/create-knowledge.dto';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
@@ -32,11 +35,17 @@ import { Conversation } from 'src/entities/conversation.entity';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Message } from 'src/entities/message.entity';
+import { CreateResumeAnalysisDto } from './dto/create-resume-analysis.dto';
+import { table } from 'console';
+import { ResumeAnalysis } from 'src/entities/resume-analysis.entity';
+import { ResumeAnalysisService } from './services/resume-checker.service';
+import { GOOGLE_REGEX, GOOGLE_URLS } from 'src/common/constants/constants';
 
 @ApiTags('RAG Chatbot')
 @Controller('chat')
 export class FeaturesController {
-  constructor(private readonly ragChatService: RagChatbotService) {}
+  constructor(
+    private readonly ragChatService: RagChatbotService) {}
 
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
@@ -125,6 +134,8 @@ export class FeaturesController {
   ) {
     return this.ragChatService.uploadPdf(files, req['user'].id);
   }
+
+
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
   @Get('all-knowledge')
@@ -158,5 +169,99 @@ export class FeaturesController {
       conversationId,
       req['user'].id,
     );
+  }
+}
+
+
+@ApiTags('Resume Analysis')
+@Controller('resume')
+@UseGuards(ClientAuthGuard)
+export class ResumeAnalysisController {
+  constructor(
+    private readonly ragChatService: RagChatbotService,
+    private readonly resumeAnalysisService: ResumeAnalysisService,
+  ) {}
+
+  @ApiBearerAuth()
+  @Post('resume-analyze')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FilesInterceptor('files'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Job description and either resume files or resume links.',
+    type: CreateResumeAnalysisDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The resumes have been successfully analyzed.',
+  })
+  async analyzeResume(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() body: CreateResumeAnalysisDto,
+    @Headers('x-client-type') clientType: string,
+    @Req() req: Request,
+  ) {
+    let resumeLinks: string[] = [];
+
+    if (body.resumeLink && body.resumeLink.length > 0) {
+      resumeLinks = body.resumeLink.map((link) =>
+        this.convertToExportLink(link),
+      );
+    }
+
+    if ((!files || files.length === 0) && resumeLinks.length === 0) {
+      throw new BadRequestException('Please provide at least one resume file or link.');
+    }
+
+    const result = await this.resumeAnalysisService.analyzeResumes(
+      {
+        description: body.description,
+        resumeLink: resumeLinks,
+        files,
+      },
+      req['user'].id,
+    );
+
+    return { message: ResponseMessages.RESUME.ANALYSIS_SUCCESS, data: result };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @Get('all-analyses')
+  @ApiResponse({
+    status: 200,
+    description: 'List of all resume analysis documents',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: ResponseMessages.RESUME.FETCHED_SUCCESS },
+        data: {
+          type: 'array',
+          items: { $ref: getSchemaPath(ResumeAnalysis) },
+        },
+      },
+    },
+  })
+  async getResumeAnalysis(
+    @Req() req: Request,
+    @Headers('x-client-type') _clientType: string,
+  ) {
+    return this.resumeAnalysisService.getResumeAnalyses(req['user'].id);
+  }
+
+  private convertToExportLink(link: string): string {
+    if (link.includes('drive.google.com')) {
+      const match = link.match(GOOGLE_REGEX.DRIVE_FILE);
+      if (match) {
+        return GOOGLE_URLS.DRIVE_EXPORT(match[0]);
+      }
+    }
+    if (link.includes('docs.google.com/document')) {
+      const match = link.match(GOOGLE_REGEX.DOC_FILE);
+      if (match) {
+        return GOOGLE_URLS.DOC_EXPORT(match[1]);
+      }
+    }
+    return link;
   }
 }
