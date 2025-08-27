@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -63,7 +67,9 @@ export class UsersService {
     });
 
     if (!user || !(await BcryptHelper.compare(password, user.password))) {
-      throw new BadRequestException(ResponseMessages.USER.INVALID_CREDENTIALS);
+      throw new UnauthorizedException(
+        ResponseMessages.USER.INVALID_CREDENTIALS,
+      );
     }
 
     const payload: IJwtPayload = {
@@ -85,5 +91,12 @@ export class UsersService {
   private async createUser(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
+  }
+
+  async getUserById(userId: string): Promise<User> {
+    return await this.userRepository.findOne({
+      where: { id: userId },
+      select: { username: true, email: true, avatar: true },
+    });
   }
 }

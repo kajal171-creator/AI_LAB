@@ -4,6 +4,7 @@ export const ResponseMessages = {
     LOGIN_FAILED: 'Invalid credentials',
     UNAUTHORIZED: 'Unauthorized access',
     TOKEN_EXPIRED: 'Token has expired',
+    LOGOUT_SUCCESS: 'Logged out successfully',
   },
   USER: {
     CREATED: 'User created successfully',
@@ -26,6 +27,8 @@ export const ResponseMessages = {
     IMAGE_GENERATION_SUCCESS: 'Image generated successfully',
     IMAGE_GENERATION_FAILED: 'Image generation failed. Please try again later.',
     SOMETHING_WENT_WRONG: 'Something Went Wrong',
+    RESUME_NOT_FOUND: 'Resume not found',
+    UPLOAD_FOLDERS: 'Upload folders'
   },
   VALIDATION: {
     MISSING_FIELDS: 'Required fields are missing',
@@ -40,13 +43,18 @@ export const ResponseMessages = {
   },
 
   RAG: {
-  FILE_UPLOADED: 'PDF file uploaded successfully',
-  MESSAGE_CREATED: 'Chat created successfully',
-  MESSAGE_SAVED: 'Chat message saved successfully',
-  CONVERSATION_NOT_FOUND: 'Conversation not found',
-  GET_CONVERSATION: 'Conversation retrieved successfully',
-  DELETE_CONVERSATION: 'Conversation deleted successfully',
-  CONVERSATION_CREATED: 'Conversation created successfully',
-}
+    FILE_UPLOADED: 'PDF file uploaded successfully',
+    MESSAGE_CREATED: 'Chat created successfully',
+    MESSAGE_SAVED: 'Chat message saved successfully',
+    CONVERSATION_NOT_FOUND: 'Conversation not found',
+    GET_CONVERSATION: 'Conversation retrieved successfully',
+    DELETE_CONVERSATION: 'Conversation deleted successfully',
+    CONVERSATION_CREATED: 'Conversation created successfully',
+  },
 
+  RESUME:{
+    ANALYSIS_SUCCESS: 'Resumes analyzed successfully',
+    FETCHED_SUCCESS: 'Resume fetched successfully',
+    ANALYZE_FAILED: 'Analysis failed, no data returned from AI service',
+  }
 };
