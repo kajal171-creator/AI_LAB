@@ -138,10 +138,10 @@ export class AiAgentApiService {
 
 
 
- async analyzeResumes(job_desc: string, google_doc_links: string[]) {
+ async analyzeResumes(description: string, resumeLink: string[]) {
     try {
       const url = `${process.env.PYTHON_RESUME_ANALYZER_URI}${RESUME_ANALYZER_ENDPOINT}`;
-      const body = { job_desc, google_doc_links };
+      const body = { description, resumeLink };
 
       this.logger.debug(`Sending resume analysis request to: ${url}`);
       this.logger.debug(`Request body: ${JSON.stringify(body)}`);
