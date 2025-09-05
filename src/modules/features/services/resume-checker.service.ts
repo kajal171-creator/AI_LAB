@@ -9,7 +9,8 @@ import { ResponseMessages } from 'src/common/constants/response-message.constant
 import axios from 'axios';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { URL } from 'url';
+import { URL, fileURLToPath } from 'url';
+import * as mime from 'mime-types';
 
 export interface AnalyzeResumesDto {
   description: string;
@@ -77,60 +78,77 @@ export class ResumeAnalysisService {
       allResumeUrls.push(...uploadedFileUrls);
     }
 
-    // 2. Process links (both web URLs and local file URIs)
+    // 2. Process links (web URLs and local file URIs)
     if (resumeLink && resumeLink.length > 0) {
       const linkProcessingPromises = resumeLink.map(async originalLink => {
-        const link = this.convertToExportLink(originalLink);
         try {
-          this.logger.log(`Downloading resume from: ${link}`);
-          const response = await axios.get(link, {
-            responseType: 'arraybuffer',
-          });
-          const fileBuffer = Buffer.from(response.data);
-
+          let fileBuffer: Buffer;
           let fileName: string;
-          const contentDisposition = response.headers['content-disposition'];
-          if (contentDisposition) {
-            const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (fileNameMatch?.[1]) {
-              fileName = fileNameMatch[1];
-            }
-          }
+          let mimetype: string;
 
-          // If no filename from headers, try to get it from the URL path
-          if (!fileName) {
-            try {
-              const url = new URL(link);
-              const pathName = url.pathname;
-              if (pathName && pathName !== '/') {
-                fileName = path.basename(pathName);
+          if (originalLink.startsWith('file:///')) {
+            // Handle local file URI
+            this.logger.log(`Reading local file from: ${originalLink}`);
+            const filePath = fileURLToPath(originalLink);
+            fileBuffer = await fs.readFile(filePath);
+            fileName = path.basename(filePath);
+            mimetype = mime.lookup(fileName) || 'application/octet-stream';
+          } else {
+            // Handle web URL
+            const link = this.convertToExportLink(originalLink);
+            this.logger.log(`Downloading resume from: ${link}`);
+            const response = await axios.get(link, {
+              responseType: 'arraybuffer',
+            });
+            fileBuffer = Buffer.from(response.data);
+
+            const contentDisposition = response.headers['content-disposition'];
+            if (contentDisposition) {
+              const fileNameMatch =
+                contentDisposition.match(/filename="?([^"]+)"?/);
+              if (fileNameMatch?.[1]) {
+                fileName = fileNameMatch[1];
               }
-            } catch (e) {
-              /* Ignore URL parsing errors */
             }
-          }
 
-          // Final fallback for filename
-          if (!fileName) {
-            fileName = `resume-${Date.now()}`;
-          }
-
-          // Ensure there's a file extension
-          if (!path.extname(fileName)) {
-            const contentType = response.headers['content-type'];
-            let extension = '.pdf'; // Default to PDF for Google Docs exports
-            if (contentType?.includes('vnd.openxmlformats-officedocument.wordprocessingml.document')) {
-              extension = '.docx';
-            } else if (contentType?.includes('msword')) {
-              extension = '.doc';
-            } else if (contentType?.includes('plain')) {
-              extension = '.txt';
+            if (!fileName) {
+              try {
+                const url = new URL(link);
+                const pathName = url.pathname;
+                if (pathName && pathName !== '/') {
+                  fileName = path.basename(pathName);
+                }
+              } catch (e) {
+                /* Ignore URL parsing errors */
+              }
             }
-            fileName += extension;
-          }
 
-          const mimetype =
-            response.headers['content-type'] || 'application/octet-stream';
+            if (!fileName) {
+              fileName = `resume-${Date.now()}`;
+            }
+
+            mimetype =
+              response.headers['content-type'] || 'application/octet-stream';
+
+            let correctExtension = '';
+            if (mimetype.includes('pdf')) {
+              correctExtension = '.pdf';
+            } else if (
+              mimetype.includes(
+                'vnd.openxmlformats-officedocument.wordprocessingml.document',
+              )
+            ) {
+              correctExtension = '.docx';
+            } else if (mimetype.includes('msword')) {
+              correctExtension = '.doc';
+            } else if (mimetype.includes('plain')) {
+              correctExtension = '.txt';
+            }
+
+            fileName =
+              path.parse(fileName).name +
+              (correctExtension || path.extname(fileName) || '.pdf');
+          }
 
           return this.uploaderService.upload(fileBuffer, {
             fileName,
