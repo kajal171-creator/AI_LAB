@@ -16,6 +16,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ResumeAnalysisService } from './services/resume-checker.service';
 import { ResumeAnalysis } from 'src/entities/resume-analysis.entity';
 import { HttpServiceModule } from '../http-service/http-service.module';
+import { TranslatorService } from './services/translator.service';
+import { Translation } from 'src/entities/translation.entity';
 
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { HttpServiceModule } from '../http-service/http-service.module';
       Conversation,
       Knowledge,
       ResumeAnalysis,
+      Translation,
     ]),
     HttpServiceModule,
   ],
@@ -46,8 +49,9 @@ import { HttpServiceModule } from '../http-service/http-service.module';
     RagChatbotService,
     ClientAuthGuard,
     JwtHelper,
-    ResumeAnalysisService
+    ResumeAnalysisService,
     
+    TranslatorService
   ],
 })
 export class FeaturesModule {}

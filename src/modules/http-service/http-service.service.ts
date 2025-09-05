@@ -10,8 +10,11 @@ import {
   IMAGE_GENERATOR_ENDPOINT,
   RAG_CHAT_ENDPOINT,
   RESUME_ANALYZER_ENDPOINT,
+  TRANSLATION_ENDPOINT,
 } from 'src/common/constants/endpoints';
-const PYTHON_BASE_URI = process.env.PYTHON_BASE_URI;
+import { console } from 'inspector';
+import { AiModelType } from 'src/common/enums/role.enum';
+//const PYTHON_BASE_URI = process.env.PYTHON_BASE_URI;
 
 @Injectable()
 export class AiAgentApiService {
@@ -84,7 +87,7 @@ export class AiAgentApiService {
   async callEmbeddingAPI(payload: {
     userId: string;
     files: { fileName: string; url: string }[];
-  }): Promise<{ successFiles: { fileName: string }[] }> {
+  }): Promise<{ successFiles: { fileName: string }[]; failedFiles?: string[] }> {
     try {
       const PYTHON_BASE_URI = process.env.PYTHON_BASE_URI;
       const response = await lastValueFrom(
@@ -95,15 +98,84 @@ export class AiAgentApiService {
             headers: {
               'Content-Type': 'application/json',
             },
+             timeout: 1000 * 60 * 10,
+             validateStatus: () => true,
           },
         ),
       );
-      return response.data;
+      //return response.data;
+
+      console.log('Embedding API raw response:', response.data);
+
+    if (response.status >= 200 && response.status < 300) {
+      return {
+        successFiles: response.data?.successFiles || [],
+        failedFiles: response.data?.failedFiles || [],
+      };
+    } else {
+      return {
+        successFiles: [],
+        failedFiles: response.data?.failedFiles || [response.data?.message || 'Unknown error'],
+      };
+    }
+    } catch (error) {
+      // console.error(
+      //   'Embedding API Error:',
+      //   error.response?.data || error.message,
+      // );
+      // return { successFiles: [] };
+    const errData = error.response?.data || error.message;
+    console.error('Embedding API Error:', errData);
+
+    return { successFiles: [], failedFiles: ['Network error or no response'] };
+    }
+  }
+
+  async translateText(
+    text: string,
+    source_language: string,
+    target_language: string,
+    style: string,
+    aiModelType: AiModelType,
+  ): Promise<string> {
+    const payload = {
+      text,
+      source_language,
+      target_language,
+      style,
+      aiModelType
+    };
+    //const PYTHON_BASE_URI = 'https://4ljdz2qw-8000.inc1.devtunnels.ms';
+    const url = 'https://58xqx6gg-8000.inc1.devtunnels.ms/translate';
+    //const url = `${PYTHON_BASE_URI}${TRANSLATION_ENDPOINT}`;
+    console.log('Translation URL:', url);
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(
+          //`${PYTHON_BASE_URI}${TRANSLATION_ENDPOINT}`,
+          url,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      );
+      console.log('Response from translation API:', response.data.translation);
+
+      if (!response.data || !response.data.translation) {
+      throw new InternalServerErrorException(
+        ResponseMessages.COMMON.SOMETHING_WENT_WRONG,
+      );
+    }
+      return response.data.translation;
     } catch (error) {
       console.error(
-        'Embedding API Error:',
+        'Error in translateText:',
         error.response?.data || error.message,
       );
+      throw new InternalServerErrorException('Translation failed');
     }
   }
 

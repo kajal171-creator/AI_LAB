@@ -42,12 +42,18 @@ import { table } from 'console';
 import { ResumeAnalysis } from 'src/entities/resume-analysis.entity';
 import { ResumeAnalysisService } from './services/resume-checker.service';
 import { GOOGLE_REGEX, GOOGLE_URLS } from 'src/common/constants/constants';
+import { CreateTranslationDto } from './dto/create-translation.dto';
+import { TranslatorService } from './services/translator.service';
+import { Translation } from 'src/entities/translation.entity';
 
 @ApiTags('RAG Chatbot')
 @Controller('chat')
 export class FeaturesController {
   constructor(
-    private readonly ragChatService: RagChatbotService) {}
+    
+    private readonly ragChatService: RagChatbotService,
+    private readonly ragTranslatorService: TranslatorService,
+  ) {}
 
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
@@ -172,6 +178,50 @@ export class FeaturesController {
       req['user'].id,
     );
   }
+
+  // TRANSLATOR ENDPOINTS =============================================================================
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @Post('translate')
+  @HttpCode(HttpStatus.CREATED)
+  async createTranslation(
+    @Body() body: CreateTranslationDto,
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+  ) {
+    return this.ragTranslatorService.createTranslation(body, req['user'].id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @Get('all-translations')
+  @ApiResponse({
+    status: 200,
+    description: 'List of all Translations',
+  })
+  async listAllTranslation(
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+  ): Promise<Translation[]> {
+    return this.ragTranslatorService.getTranslations(req['user'].id);
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  async deleteTranslation(
+    @Param('id') translationId: string,
+    @Req() req: Request,
+  ) {
+    const updatedTranslationList = await this.ragTranslatorService.deleteTranslationById(
+      req['user'].id,
+      translationId,
+    );
+    return {
+      message: 'Translation deleted successfully',
+      translations: updatedTranslationList,
+    };
+  }
 }
 
 
@@ -267,3 +317,4 @@ export class ResumeAnalysisController {
     return link;
   }
 }
+
