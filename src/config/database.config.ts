@@ -1,11 +1,13 @@
 import { registerAs } from '@nestjs/config';
+import { ResumeAnalysis } from 'src/entities/resume-analysis.entity';
+import { User } from 'src/entities/user.entity';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 export default registerAs(
   'dbConfig',
   (): PostgresConnectionOptions => ({
     type: 'postgres',
-    entities: ['dist/entities/*.entity{.ts,.js}'],
+    entities: ['dist/entities/*.entity{.ts,.js}', ResumeAnalysis,User],
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
     username: process.env.DB_USERNAME,
@@ -13,5 +15,6 @@ export default registerAs(
     database: process.env.DB_DATABASE,
     logging: process.env.NODE_ENV == 'dev' ? 'all' : undefined,
     synchronize: process.env.NODE_ENV == 'dev' ? true : false,
+    
   }),
 );

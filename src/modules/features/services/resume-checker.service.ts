@@ -1,5 +1,5 @@
 // src/modules/features/services/resume-checker.service.ts
-import { Injectable, Logger, NotFoundException, Res } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ResumeAnalysis } from '../../../entities/resume-analysis.entity';
@@ -7,6 +7,10 @@ import { AiAgentApiService } from '../../http-service/http-service.service';
 import { UploaderService } from '../../../common/helpers/uplaod.helper';
 import { ResponseMessages } from 'src/common/constants/response-message.constants';
 import axios from 'axios';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { URL, fileURLToPath } from 'url';
+import * as mime from 'mime-types';
 
 export interface AnalyzeResumesDto {
   description: string;
@@ -14,6 +18,16 @@ export interface AnalyzeResumesDto {
   files?: Express.Multer.File[];
 }
 
+// These constants should be moved to a shared constants file for better organization.
+const GOOGLE_REGEX = {
+  DRIVE_FILE: /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+  DOC_FILE: /docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/,
+};
+
+const GOOGLE_URLS = {
+  DRIVE_EXPORT: (id: string) => `https://docs.google.com/uc?export=download&id=${id}`,
+  DOC_EXPORT: (id: string) => `https://docs.google.com/document/d/${id}/export?format=pdf`,
+};
 
 @Injectable()
 export class ResumeAnalysisService {
@@ -26,137 +40,190 @@ export class ResumeAnalysisService {
     private readonly uploaderService: UploaderService,
   ) {}
 
-
-  private normalizeScore(rawScore: any): number {
+  private normalizeScore(rawScore: string | number): number {
     if (!rawScore) return 0;
-    const num = parseFloat(String(rawScore).replace(/[^0-9.]/g, '')); 
+    const num = parseFloat(String(rawScore).replace(/[^0-9.]/g, ''));
     return isNaN(num) ? 0 : num;
+  }
+
+  private convertToExportLink(link: string): string {
+    let match = link.match(GOOGLE_REGEX.DRIVE_FILE);
+    if (match?.[1]) {
+      this.logger.log(`Converting Google Drive link: ${link}`);
+      return GOOGLE_URLS.DRIVE_EXPORT(match[1]);
+    }
+
+    match = link.match(GOOGLE_REGEX.DOC_FILE);
+    if (match?.[1]) {
+      this.logger.log(`Converting Google Docs link: ${link}`);
+      return GOOGLE_URLS.DOC_EXPORT(match[1]);
+    }
+    return link;
   }
 
   async analyzeResumes(dto: AnalyzeResumesDto, userId: string) {
     const { description, resumeLink, files } = dto;
+    const allResumeUrls: string[] = [];
 
-    const processResumeBuffer = async (
-      buffer: Buffer,
-      source: string,
-      options: { fileName: string; mimetype: string },
-    ) => {
-      try {
-        this.logger.log(`Uploading and analyzing resume from ${source}`);
-        const resumeUrl = await this.uploaderService.upload(buffer, {
-          fileName: options.fileName,
-          mimetype: options.mimetype,
-          folder: 'resumes',
-        });
-
-        const analysisResponse = await this.aiAgentApiService.analyzeResumes(
-          description,
-          [resumeUrl],
-        );
-
-        if (!analysisResponse || analysisResponse.length === 0) {
-          throw new Error(ResponseMessages.RESUME.ANALYZE_FAILED);
-        };
-
-        const { name, score, justification } = analysisResponse[0];
-
-        const safeName = name && name.trim() !== ''
-          ? name
-          : 'Unknown';
-
-        const cleanScore = this.normalizeScore(score);
-
-        const analysis = this.resumeRepo.create({
-          description,
-          candidateName: safeName,   
-          resumeLink: resumeUrl,
-          score: cleanScore,
-          justification: justification,
-          user: { id: userId },
-        });
-        await this.resumeRepo.save(analysis);
-
-        return { name: safeName, score: cleanScore, justification };
-      } catch (error) {
-        this.logger.error(
-          `Failed to analyze resume from ${source}. Error: ${error.message}`,
-          error.stack,
-        );
-        let errorMessage = 'An unexpected error occurred during analysis.';
-        if (error.code === 'ECONNREFUSED') {
-          errorMessage = `Connection refused. Please ensure the Python service is running.`;
-        } else {
-          errorMessage = error.message;
-        }
-        
-        return {
-          name: `Unknown (failed: ${source})`,
-          score: 0,
-          justification: `Server Error: ${errorMessage}`,
-        };
-      }
-    };
-
-    const analysisPromises = [];
-
+    // 1. Process uploaded files
     if (files && files.length > 0) {
-      for (const file of files) {
-        analysisPromises.push(
-          processResumeBuffer(
-            file.buffer,
-            `uploaded file: ${file.originalname}`,
-            { fileName: file.originalname, mimetype: file.mimetype },
-          ),
-        );
-      }
+      const fileUploadPromises = files.map(file =>
+        this.uploaderService.upload(file.buffer, {
+          fileName: file.originalname,
+          mimetype: file.mimetype,
+          folder: 'resumes',
+        }),
+      );
+      const uploadedFileUrls = await Promise.all(fileUploadPromises);
+      allResumeUrls.push(...uploadedFileUrls);
     }
 
+    // 2. Process links (web URLs and local file URIs)
     if (resumeLink && resumeLink.length > 0) {
-      for (const link of resumeLink) {
-        const linkPromise = (async () => {
-          try {
-            this.logger.log(`Downloading resume from link: ${link}`);
+      const linkProcessingPromises = resumeLink.map(async originalLink => {
+        try {
+          let fileBuffer: Buffer;
+          let fileName: string;
+          let mimetype: string;
+
+          if (originalLink.startsWith('file:///')) {
+            // Handle local file URI
+            this.logger.log(`Reading local file from: ${originalLink}`);
+            const filePath = fileURLToPath(originalLink);
+            fileBuffer = await fs.readFile(filePath);
+            fileName = path.basename(filePath);
+            mimetype = mime.lookup(fileName) || 'application/octet-stream';
+          } else {
+            // Handle web URL
+            const link = this.convertToExportLink(originalLink);
+            this.logger.log(`Downloading resume from: ${link}`);
             const response = await axios.get(link, {
               responseType: 'arraybuffer',
             });
-            const fileBuffer = Buffer.from(response.data);
+            fileBuffer = Buffer.from(response.data);
 
             const contentDisposition = response.headers['content-disposition'];
-            let fileName = `resume-${Date.now()}.pdf`; 
             if (contentDisposition) {
-              const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
-              if (fileNameMatch && fileNameMatch.length > 1) {
+              const fileNameMatch =
+                contentDisposition.match(/filename="?([^"]+)"?/);
+              if (fileNameMatch?.[1]) {
                 fileName = fileNameMatch[1];
               }
             }
 
-            const mimetype =
-              response.headers['content-type'] || 'application/pdf';
+            if (!fileName) {
+              try {
+                const url = new URL(link);
+                const pathName = url.pathname;
+                if (pathName && pathName !== '/') {
+                  fileName = path.basename(pathName);
+                }
+              } catch (e) {
+                /* Ignore URL parsing errors */
+              }
+            }
 
-            return await processResumeBuffer(fileBuffer, `link: ${link}`, {
-              fileName,
-              mimetype,
-            });
-          } catch (error) {
-            this.logger.error(
-              `Failed to download resume from link: ${link}`,
-              error.stack,
-            );
-            const errorMessage = axios.isAxiosError(error)
-              ? `Failed to download from link: ${error.message}`
-              : 'Could not download file from link.';
-            return {
-              name: `Unknown (failed: ${link})`,
-              score: 0,
-              justification: `Server Error: ${errorMessage}`,
-            };
+            if (!fileName) {
+              fileName = `resume-${Date.now()}`;
+            }
+
+            mimetype =
+              response.headers['content-type'] || 'application/octet-stream';
+
+            let correctExtension = '';
+            if (mimetype.includes('pdf')) {
+              correctExtension = '.pdf';
+            } else if (
+              mimetype.includes(
+                'vnd.openxmlformats-officedocument.wordprocessingml.document',
+              )
+            ) {
+              correctExtension = '.docx';
+            } else if (mimetype.includes('msword')) {
+              correctExtension = '.doc';
+            } else if (mimetype.includes('plain')) {
+              correctExtension = '.txt';
+            }
+
+            fileName =
+              path.parse(fileName).name +
+              (correctExtension || path.extname(fileName) || '.pdf');
           }
-        })();
-        analysisPromises.push(linkPromise);
-      }
+
+          return this.uploaderService.upload(fileBuffer, {
+            fileName,
+            mimetype,
+            folder: 'resumes',
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to process resume from link: ${originalLink}`,
+            error.stack,
+          );
+          return null;
+        }
+      });
+
+      const processedLinkUrls = (
+        await Promise.all(linkProcessingPromises)
+      ).filter((url): url is string => url !== null);
+      allResumeUrls.push(...processedLinkUrls);
     }
 
-    return Promise.all(analysisPromises);
+    if (allResumeUrls.length === 0) {
+      return { message: 'No valid resumes could be processed.', data: null };
+    }
+
+    const analysisResponse = await this.aiAgentApiService.analyzeResumes(
+      description,
+      allResumeUrls,
+    );
+
+
+const results = Array.isArray(analysisResponse.results)
+  ? analysisResponse.results
+  : [analysisResponse];
+
+if (!results || results.length === 0) {
+  throw new Error(ResponseMessages.RESUME.ANALYZE_FAILED);
+}
+
+
+    const analysesToSave = analysisResponse.results.map(result => {
+      const fullResumeLink =
+        allResumeUrls.find(url => url.includes(result.filename)) ||
+        result.filename;
+      return this.resumeRepo.create({
+        description,
+        user: { id: userId },
+        fileName: result.filename,
+        candidateName: result.candidate_name,
+        score: this.normalizeScore(result.overall_score),
+        resumeLink: fullResumeLink,
+        justification: result.summary,
+        rank: result.rank,
+        recommendation: result.recommendation,
+        semantic_similarity: this.normalizeScore(result.semantic_similarity),
+        confidence: result.confidence,
+        strengths: result.strengths,
+        gaps: result.gaps,
+        keyword_analysis: result.keyword_analysis,
+        detailed_scores: result.detailed_scores,
+        stability: result.stability,
+        suggested_profile: result.suggested_profile,
+      });
+    });
+
+    const savedAnalyses = await this.resumeRepo.save(analysesToSave);
+
+    analysisResponse.results.forEach(result => {
+      const saved = savedAnalyses.find(s => s.fileName === result.filename);
+      if (saved) {
+        (result as any).databaseId = saved.id;
+      }
+    });
+
+    return analysisResponse;
   }
 
   async getResumeAnalyses(userId: string) {

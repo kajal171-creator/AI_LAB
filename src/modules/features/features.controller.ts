@@ -21,7 +21,9 @@ import {
   ApiSecurity,
   ApiBearerAuth,
   getSchemaPath,
+  ApiExtraModels,
 } from '@nestjs/swagger';
+
 import { CreateKnowledgeDto } from './dto/create-knowledge.dto';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
@@ -183,7 +185,7 @@ export class ResumeAnalysisController {
   ) {}
 
   @ApiBearerAuth()
-  @Post('resume-analyze')
+  @Post('analyze-resume')
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FilesInterceptor('files'))
   @ApiConsumes('multipart/form-data')
@@ -210,7 +212,7 @@ export class ResumeAnalysisController {
     }
 
     if ((!files || files.length === 0) && resumeLinks.length === 0) {
-      throw new BadRequestException('Please provide at least one resume file or link.');
+      throw new BadRequestException(ResponseMessages.RESUME.MISSING_RESUME);
     }
 
     const result = await this.resumeAnalysisService.analyzeResumes(
@@ -253,7 +255,7 @@ export class ResumeAnalysisController {
     if (link.includes('drive.google.com')) {
       const match = link.match(GOOGLE_REGEX.DRIVE_FILE);
       if (match) {
-        return GOOGLE_URLS.DRIVE_EXPORT(match[0]);
+        return GOOGLE_URLS.DRIVE_EXPORT(match[1]);
       }
     }
     if (link.includes('docs.google.com/document')) {

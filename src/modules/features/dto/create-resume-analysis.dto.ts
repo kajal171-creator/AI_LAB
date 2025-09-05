@@ -1,25 +1,29 @@
 import {
   IsString,
+  IsOptional,
   IsArray,
   ArrayNotEmpty,
-  IsUrl,
-  Matches,
-  IsOptional,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
+import { IsValidUri } from 'src/common/validators/is-valid-uri.validator';
 
-const GOOGLE_DOCS_URL_REGEX =
-  /^https:\/\/docs\.google\.com\/document\/d\/[a-zA-Z0-9_-]+(\/.*)?$/;
+const transformToArray = ({
+  value,
+}: {
+  value: string | string[];
+}): string[] | undefined => {
+  // If value is falsy (null, undefined, ''), return undefined.
+  if (!value) return undefined;
 
-const transformToArray = ({ value }: { value: any }): string[] | undefined => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-  if (typeof value === 'string') {
-    return value.split(',').map(item => item.trim());
-  }
-  return value;
+  // Ensure value is an array of strings.
+  const links = Array.isArray(value) ? value : String(value).split(',');
+
+  // Trim whitespace from each link and filter out any empty strings.
+  const trimmedAndFiltered = links.map(item => String(item).trim()).filter(Boolean);
+
+  // If the array is empty after filtering, return undefined so @IsOptional() works.
+  return trimmedAndFiltered.length > 0 ? trimmedAndFiltered : undefined;
 };
 
 export class CreateResumeAnalysisDto {
@@ -31,9 +35,14 @@ export class CreateResumeAnalysisDto {
   description: string;
 
   @ApiProperty({
-    example: ['https://docs.google.com/document/d/your_document_id_1/edit'],
+    example: [
+      'https://docs.google.com/document/d/your_doc_id/edit',
+      'https://drive.google.com/file/d/your_file_id/view',
+      'https://example.com/resume.txt',
+      'file:///C:/Users/YourName/Documents/resume.pdf',
+    ],
     description:
-      'An array or comma-separated string of Google Docs resume links. Provide either this or a file.',
+      'An array of public web URLs (Google Docs, Google Drive, PDF, TXT, etc.) or local file URIs.',
     required: false,
     type: [String],
   })
@@ -41,10 +50,6 @@ export class CreateResumeAnalysisDto {
   @Transform(transformToArray)
   @IsArray()
   @ArrayNotEmpty()
-  @IsUrl({}, { each: true, message: 'Each resume link must be a valid URL.' })
-  @Matches(GOOGLE_DOCS_URL_REGEX, {
-    each: true,
-    message: 'Each resume link must be a valid Google Docs URL.',
-  })
-  resumeLink: string[];
+  @IsValidUri({ each: true })
+  resumeLink?: string[];
 }

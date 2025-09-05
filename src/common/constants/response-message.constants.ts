@@ -56,5 +56,8 @@ export const ResponseMessages = {
     ANALYSIS_SUCCESS: 'Resumes analyzed successfully',
     FETCHED_SUCCESS: 'Resume fetched successfully',
     ANALYZE_FAILED: 'Analysis failed, no data returned from AI service',
+    MISSING_RESUME: 'Please provide at least one resume file or link.',
+    UNEXPECTED_ERROR: 'An unexpected error occurred during analysis.',
+    CONNECTION_REFUSED: 'Connection refused. Please ensure the Python service is running.',
   }
 };
