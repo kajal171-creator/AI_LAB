@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { FeaturesController } from './features.controller';
+import { FeaturesController,ResumeAnalysisController } from './features.controller';
 import { ImageGeneratorService } from './services/image-generator.service';
-import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ImageGenerationHistory } from 'src/entities/image-generation.history.entity';
-import { AiAgentApiService } from '../http-service/http-service.service';
 import { UploaderService } from 'src/common/helpers/uplaod.helper';
 import { RagChatbotService } from './services/rag-chatbot.service';
 import { Message } from 'src/entities/message.entity';
@@ -15,12 +13,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { ClientAuthGuard } from 'src/common/guards/client-auth.guard';
 import { JwtHelper } from 'src/common/helpers/jwt.helper';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ResumeAnalysisService } from './services/resume-checker.service';
+import { ResumeAnalysis } from 'src/entities/resume-analysis.entity';
+import { HttpServiceModule } from '../http-service/http-service.module';
 import { TranslatorService } from './services/translator.service';
 import { Translation } from 'src/entities/translation.entity';
 
 @Module({
   imports: [
-    HttpModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -37,17 +37,20 @@ import { Translation } from 'src/entities/translation.entity';
       Message,
       Conversation,
       Knowledge,
+      ResumeAnalysis,
       Translation,
     ]),
+    HttpServiceModule,
   ],
-  controllers: [FeaturesController],
+  controllers: [FeaturesController, ResumeAnalysisController],
   providers: [
     ImageGeneratorService,
-    AiAgentApiService,
     UploaderService,
     RagChatbotService,
     ClientAuthGuard,
     JwtHelper,
+    ResumeAnalysisService,
+    
     TranslatorService
   ],
 })

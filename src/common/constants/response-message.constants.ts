@@ -27,6 +27,8 @@ export const ResponseMessages = {
     IMAGE_GENERATION_SUCCESS: 'Image generated successfully',
     IMAGE_GENERATION_FAILED: 'Image generation failed. Please try again later.',
     SOMETHING_WENT_WRONG: 'Something Went Wrong',
+    RESUME_NOT_FOUND: 'Resume not found',
+    UPLOAD_FOLDERS: 'Upload folders'
   },
   VALIDATION: {
     MISSING_FIELDS: 'Required fields are missing',
@@ -54,4 +56,10 @@ export const ResponseMessages = {
     DELETE_CONVERSATION: 'Conversation deleted successfully',
     CONVERSATION_CREATED: 'Conversation created successfully',
   },
+
+  RESUME:{
+    ANALYSIS_SUCCESS: 'Resumes analyzed successfully',
+    FETCHED_SUCCESS: 'Resume fetched successfully',
+    ANALYZE_FAILED: 'Analysis failed, no data returned from AI service',
+  }
 };

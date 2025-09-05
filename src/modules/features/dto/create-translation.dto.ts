@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { AiModelType } from 'src/common/enums/role.enum';
 
 export class CreateTranslationDto {
   @ApiProperty({
@@ -33,4 +34,12 @@ export class CreateTranslationDto {
   @IsNotEmpty({ message: 'Style is required' })
   @IsString({ message: 'Style must be a string' })
   style: string;
+
+  @ApiProperty({
+    example: 'gpt-4o-mini',
+    description: 'AI model type to be used for translation',
+  })
+  @IsNotEmpty({ message: 'AI model type is required' })
+  @IsEnum(AiModelType, { message: 'Invalid AI model type' })
+  aiModelType: AiModelType;
 }

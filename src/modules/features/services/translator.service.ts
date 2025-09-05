@@ -39,24 +39,27 @@ export class TranslatorService {
         body.sourceLanguage,
         body.targetLanguage,
         body.style,
-        userId,
+        body.aiModelType,
       );
 
       if (!translatedText) {
-        throw new BadRequestException(ResponseMessages.Translation.TRANSLATION_ERROR);
+        throw new BadRequestException(
+          ResponseMessages.Translation.TRANSLATION_ERROR,
+        );
       }
       console.log('Translated Text:---------- ', translatedText);
-    
+
       const translation = this.translationRepository.create({
         sourceLanguage: body.sourceLanguage,
         targetLanguage: body.targetLanguage,
         text: body.text,
         translatedText,
         style: body.style,
+        aiModelType: body.aiModelType,
         user,
       });
 
-      await this.translationRepository.save(translation);
+      this.translationRepository.save(translation);
 
       return translatedText;
     } catch (error) {
@@ -69,7 +72,6 @@ export class TranslatorService {
     try {
       return await this.translationRepository.find({
         where: { user: { id: userId } },
-        relations: ['sender', 'receiver'],
         order: { createdAt: 'DESC' },
       });
     } catch (error) {
@@ -78,25 +80,28 @@ export class TranslatorService {
     }
   }
 
-  async deleteTranslationById(translationId: string, userId: string): Promise<Translation[]> {
+  async deleteTranslationById(
+    translationId: string,
+    userId: string,
+  ): Promise<Translation[]> {
     try {
       const translation = await this.translationRepository.findOne({
-      where: { id: translationId, user: { id: userId } },
-    });
+        where: { id: translationId, user: { id: userId } },
+      });
 
-    if (!translation) {
-      throw new BadRequestException(ResponseMessages.Translation.NOT_FOUND);
-    }
+      if (!translation) {
+        throw new BadRequestException(ResponseMessages.Translation.NOT_FOUND);
+      }
 
-    await this.translationRepository.remove(translation);
+      await this.translationRepository.remove(translation);
 
-    return await this.translationRepository.find({
-      where: { user: { id: userId } },
-      order: { createdAt: 'ASC' },
-    });
+      return await this.translationRepository.find({
+        where: { user: { id: userId } },
+        order: { createdAt: 'ASC' },
+      });
     } catch (error) {
       console.error('Error deleting translation:', error);
       throw error;
-    } 
+    }
   }
 }

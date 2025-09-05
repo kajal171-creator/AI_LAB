@@ -1,6 +1,7 @@
 import { BaseEntity } from 'src/common/database/sm-base.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from './user.entity';
+import { AiModelType } from 'src/common/enums/role.enum';
 
 @Entity('rag_translation')
 export class Translation extends BaseEntity {
@@ -38,6 +39,13 @@ export class Translation extends BaseEntity {
     nullable: false,
   })
   style: string;
+
+  @Column({
+    type: 'enum',
+    enum: AiModelType,
+    default: AiModelType.GPT_4O_MINI,
+  })
+  aiModelType: AiModelType;
 
   @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'user_id' })
