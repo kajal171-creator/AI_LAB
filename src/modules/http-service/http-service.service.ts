@@ -135,25 +135,23 @@ export class AiAgentApiService {
     text: string,
     source_language: string,
     target_language: string,
-    style: string,
+    style_guide_input: string,
     aiModelType: AiModelType,
   ): Promise<string> {
     const payload = {
       text,
-      source_language,
+      source_language: source_language,
       target_language,
-      style,
+      style_guide_input,
       aiModelType
     };
-    //const PYTHON_BASE_URI = 'https://4ljdz2qw-8000.inc1.devtunnels.ms';
-    const url = 'https://58xqx6gg-8000.inc1.devtunnels.ms/translate';
-    //const url = `${PYTHON_BASE_URI}${TRANSLATION_ENDPOINT}`;
-    console.log('Translation URL:', url);
+    console.log('Translation payload:', payload);
+    const PYTHON_BASE_URI = process.env.PYTHON_BASE_URI_TRANSLATION;
     try {
+      console.log('Translation payload:', payload);
       const response = await lastValueFrom(
         this.httpService.post(
-          //`${PYTHON_BASE_URI}${TRANSLATION_ENDPOINT}`,
-          url,
+          `${PYTHON_BASE_URI}${TRANSLATION_ENDPOINT}`,
           payload,
           {
             headers: {
@@ -175,6 +173,7 @@ export class AiAgentApiService {
         'Error in translateText:',
         error.response?.data || error.message,
       );
+
       throw new InternalServerErrorException('Translation failed');
     }
   }
