@@ -12,10 +12,11 @@ import { Response } from 'express';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { ClientType, NODE_ENV } from 'src/common/constants/constants';
+import { CLIENT_TYPE, NODE_ENV } from 'src/common/constants/constants';
 import { ResponseMessages } from 'src/common/constants/response-message.constants';
 import { ClientTypeValidationPipe } from 'src/common/pipes/client-validation.pipe';
 import { ClientAuthGuard } from 'src/common/guards/client-auth.guard';
+import { User } from 'src/entities/user.entity';
 
 @Controller('users')
 export class UsersController {
@@ -31,11 +32,13 @@ export class UsersController {
 
     let response;
     const accessToken = await this.usersService.register(registerDto);
-    if (clientType === ClientType.WEB) {
+    if (clientType === CLIENT_TYPE.WEB) {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === NODE_ENV.PROD,
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
+        domain:
+          process.env.NODE_ENV === NODE_ENV.PROD ? '.antino.ca' : undefined,
       });
       response = {
         message: ResponseMessages.AUTH.LOGIN_SUCCESS,
@@ -59,11 +62,13 @@ export class UsersController {
 
     let response;
     const { accessToken } = await this.usersService.login(loginDto);
-    if (clientType === ClientType.WEB) {
+    if (clientType === CLIENT_TYPE.WEB) {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === NODE_ENV.PROD,
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
+        domain:
+          process.env.NODE_ENV === NODE_ENV.PROD ? '.antino.ca' : undefined,
       });
       response = {
         message: ResponseMessages.AUTH.LOGIN_SUCCESS,
@@ -77,9 +82,34 @@ export class UsersController {
     return response;
   }
 
+  @Post('logout')
+  async logout(
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-client-type') rawClientType: string,
+  ) {
+    const clientType = new ClientTypeValidationPipe().transform(rawClientType);
+
+    if (clientType === CLIENT_TYPE.WEB) {
+      res.clearCookie('accessToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        domain:
+          process.env.NODE_ENV === NODE_ENV.PROD ? '.antino.ca' : undefined,
+      });
+    }
+
+    return {
+      message: ResponseMessages.AUTH.LOGOUT_SUCCESS,
+    };
+  }
+
   @UseGuards(ClientAuthGuard)
   @Get('profile')
-  getProfile(@Req() req, @Headers('x-client-type') clientType: string) {
-    return req.user;
+  getProfile(
+    @Req() req,
+    @Headers('x-client-type') clientType: string,
+  ): Promise<User> {
+    return this.usersService.getUserById(req.user.id);
   }
 }

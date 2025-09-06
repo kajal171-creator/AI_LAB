@@ -1,23 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsEmail, ValidateIf } from 'class-validator';
+import { IsNotEmpty, IsEmail } from 'class-validator';
 import { ILogin } from 'src/common/interfaces/entity.interface';
-import { IsEmailOrUsername } from 'src/common/validators/email-or-username.validator';
 
 export class LoginUserDto implements ILogin {
-  @ApiProperty({ required: false })
-  @ValidateIf((obj) => obj.email !== undefined && obj.email !== '')
+  @ApiProperty({ required: true })
   @IsEmail({}, { message: 'Email must be valid' })
-  email?: string;
+  @IsNotEmpty({ message: 'Email is required' })
+  email: string;
 
-  @ApiProperty({ required: false })
-  username?: string;
-
-  @ApiProperty()
+  @ApiProperty({ required: true })
   @IsNotEmpty({ message: 'Password is required' })
   password: string;
-
-  @IsEmailOrUsername({
-    message: 'Either email or username must be provided',
-  })
-  _atLeastOne: string;
 }
