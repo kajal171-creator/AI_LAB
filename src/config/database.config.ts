@@ -5,7 +5,7 @@ export default registerAs(
   'dbConfig',
   (): PostgresConnectionOptions => ({
     type: 'postgres',
-    entities: ['dist/entities/*.entity{.ts,.js}'],
+    entities: ['dist/src/entities/*.entity{.ts,.js}'],
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
     username: process.env.DB_USERNAME,
