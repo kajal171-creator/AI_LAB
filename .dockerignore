@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+Dockerfile*
+.dockerignore
+.git
+.gitignore
+.env     # ignore only base env, keep .env.local if needed
+dist
+coverage
+.cache
+.tmp
+**/*.tsbuildinfo

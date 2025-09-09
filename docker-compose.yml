@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: antino_ai_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-antino_ai}
+      POSTGRES_USER: ${DB_USERNAME:-antino}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-antino}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-antino} -d ${DB_DATABASE:-antino_ai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: antino_ai_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: development   # ✅ so synchronize/logging works
+      PORT: ${PORT:-3000}
+      DB_HOST: db             # ✅ connect via service name
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-antino}
+      DB_PASSWORD: ${DB_PASSWORD:-antino}
+      DB_DATABASE: ${DB_DATABASE:-antino_ai}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-changeme-in-prod}
+      ACCESS_TOKEN_EXPIRY_TIME: ${ACCESS_TOKEN_EXPIRY_TIME:-1d}
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:
