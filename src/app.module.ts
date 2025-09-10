@@ -10,6 +10,7 @@ import { FeaturesModule } from './modules/features/features.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { SuccessResponseInterceptor } from './common/interceptors/response.interceptor';
 import jwtConfig from './config/jwt.config';
+import { HttpModule } from '@nestjs/axios/dist/http.module';
 
 @Module({
   imports: [
@@ -22,6 +23,12 @@ import jwtConfig from './config/jwt.config';
     TypeOrmModule.forRootAsync({
       useFactory: dbConfig,
     }),
+    
+    HttpModule.register({
+      timeout: 120000, // Set global timeout to 2 minutes
+      maxRedirects: 5,
+    }),
+
     UsersModule,
     FeaturesModule,
   ],

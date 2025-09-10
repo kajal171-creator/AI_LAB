@@ -211,8 +211,13 @@ export class AiAgentApiService {
 
  async analyzeResumes(description: string, resumeLink: string[]) {
     try {
+       this.logger.debug('PDF file(s) uploaded.', { resumeLinks: resumeLink });
+
       const url = `${process.env.PYTHON_RESUME_ANALYZER_URI}${RESUME_ANALYZER_ENDPOINT}`;
       const body = { description, resumeLink };
+
+      this.logger.debug(`Sending resume analysis request to Python API at ${url}`);
+      this.logger.debug(`Request body -> ${JSON.stringify(body)}`);
 
       this.logger.debug(`Sending resume analysis request to: ${url}`);
       this.logger.debug(`Request body: ${JSON.stringify(body)}`);
@@ -222,7 +227,7 @@ export class AiAgentApiService {
           headers: { 'Content-Type': 'application/json' },
         }),
       );
-
+      this.logger.debug('Resume Analyzer: Response received from Python API.');
       this.logger.debug(`Python API response: ${JSON.stringify(response.data)}`);
       return response.data;
     }
