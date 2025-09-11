@@ -25,7 +25,7 @@ import { HttpModule } from '@nestjs/axios/dist/http.module';
     }),
     
     HttpModule.register({
-      timeout: 120000, // Set global timeout to 2 minutes
+      timeout: 120000, 
       maxRedirects: 5,
     }),
 

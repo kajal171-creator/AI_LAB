@@ -45,6 +45,11 @@ import { GOOGLE_REGEX, GOOGLE_URLS } from 'src/common/constants/constants';
 import { CreateTranslationDto } from './dto/create-translation.dto';
 import { TranslatorService } from './services/translator.service';
 import { Translation } from 'src/entities/translation.entity';
+import { ClientProfilingService } from './services/client-profiling.service';
+import { CreateMeetingDto } from './dto/client-profiling.dto';
+import { ClientProfiling } from 'src/entities/client-profiling.entity';
+
+const RESUME_ANALYZER_ENDPOINT = '/analyze-resumes';
 
 @ApiTags('RAG Chatbot')
 @Controller('chat')
@@ -315,6 +320,27 @@ export class ResumeAnalysisController {
       }
     }
     return link;
+  }
+}
+
+@ApiTags('Client Profiling')
+@Controller('api')
+export class ClientProfilingController {
+  constructor(private readonly clientProfilingService: ClientProfilingService) {}
+
+  @Post('generate-brief')
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiResponse({ status: 201, description: 'The profile has been successfully generated.', type: ClientProfiling })
+  @ApiResponse({ status: 500, description: 'Failed to generate profile.' })
+  async createProfile(
+    @Body() createMeetingDto: CreateMeetingDto,
+    @Req() req: Request, // optional: access request if needed
+    @Headers('x-client-type') clientType: string, // optional: access header
+  ): Promise<ClientProfiling> {
+    // You can use req or clientType if needed
+    return this.clientProfilingService.createProfile(createMeetingDto);
   }
 }
 

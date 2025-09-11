@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { FeaturesController,ResumeAnalysisController } from './features.controller';
+import { ClientProfilingController, FeaturesController,ResumeAnalysisController } from './features.controller';
 import { ImageGeneratorService } from './services/image-generator.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ImageGenerationHistory } from 'src/entities/image-generation.history.entity';
@@ -18,6 +18,8 @@ import { ResumeAnalysis } from 'src/entities/resume-analysis.entity';
 import { HttpServiceModule } from '../http-service/http-service.module';
 import { TranslatorService } from './services/translator.service';
 import { Translation } from 'src/entities/translation.entity';
+import { ClientProfilingService } from './services/client-profiling.service';
+import { ClientProfiling } from 'src/entities/client-profiling.entity';
 
 @Module({
   imports: [
@@ -39,10 +41,11 @@ import { Translation } from 'src/entities/translation.entity';
       Knowledge,
       ResumeAnalysis,
       Translation,
+      ClientProfiling,
     ]),
     HttpServiceModule,
   ],
-  controllers: [FeaturesController, ResumeAnalysisController],
+  controllers: [FeaturesController, ResumeAnalysisController,ClientProfilingController],
   providers: [
     ImageGeneratorService,
     UploaderService,
@@ -50,7 +53,7 @@ import { Translation } from 'src/entities/translation.entity';
     ClientAuthGuard,
     JwtHelper,
     ResumeAnalysisService,
-    
+    ClientProfilingService,
     TranslatorService
   ],
 })

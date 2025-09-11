@@ -11,9 +11,11 @@ import {
   RAG_CHAT_ENDPOINT,
   RESUME_ANALYZER_ENDPOINT,
   TRANSLATION_ENDPOINT,
+  CLIENT_PROFILE_ENDPOINT,
 } from 'src/common/constants/endpoints';
 import { console } from 'inspector';
 import { AiModelType } from 'src/common/enums/role.enum';
+import { CreateMeetingDto } from '../features/dto/client-profiling.dto';
 //const PYTHON_BASE_URI = process.env.PYTHON_BASE_URI;
 
 @Injectable()
@@ -244,4 +246,35 @@ export class AiAgentApiService {
     throw new InternalServerErrorException('Resume analysis failed');
   }
  }
+
+
+async generateClientProfile(createDto: CreateMeetingDto) {
+    try {
+      const url = `${process.env.CLIENT_PROFILE_PYTHON_URI}${CLIENT_PROFILE_ENDPOINT}`;
+
+      this.logger.debug(`Sending client profile request to Python API at ${url}`);
+      this.logger.debug(`Request body -> ${JSON.stringify(createDto)}`);
+
+      const response = await lastValueFrom(
+        this.httpService.post(url, createDto, {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      this.logger.debug('Client Profiling: Response received from Python API.');
+      this.logger.debug(`Python API response: ${JSON.stringify(response.data)}`);
+
+      return response.data; // returns whatever the Python API sends
+    } catch (error) {
+      if (error.response) {
+        this.logger.error(
+          `Client profiling failed. Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`
+        );
+      } else {
+        this.logger.error(`Client profiling failed. Error: ${error.message}`, error.stack);
+      }
+
+      throw new InternalServerErrorException('Client profiling failed');
+    }
+  }
 }
