@@ -51,6 +51,7 @@ export class ClientProfiling {
 
   @Column({ type: 'text', array: true, nullable: true })
   major_initiatives: string[];
+  
   @Column({ type: 'text', array: true, nullable: true })
   connection_opportunities: string[];
 

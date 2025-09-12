@@ -245,42 +245,73 @@ export class ResumeAnalysisController {
   @UseInterceptors(FilesInterceptor('files'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Job description and either resume files or resume links.',
-    type: CreateResumeAnalysisDto,
-  })
+  description: 'Job description, resume links, and resume files to analyze.',
+  schema: {
+    type: 'object',
+    properties: {
+      description: {
+        type: 'string',
+        example: 'A job description for a software engineer...'
+      },
+      resumeLink: {
+        type: 'array',
+        items: { type: 'string', example: 'https://docs.google.com/document/d/your_doc_id/edit' },
+        description: 'Links to resumes (Google Docs, Drive, etc.)',
+      },
+      files: {
+        type: 'array',
+        items: {
+          type: 'string',
+          format: 'binary'
+        },
+        description: 'Upload resume files like PDF, DOC, etc.'
+      }
+    },
+    required: ['description']
+  }
+})
+
   @ApiResponse({
     status: 200,
     description: 'The resumes have been successfully analyzed.',
   })
-  async analyzeResume(
-    @UploadedFiles() files: Express.Multer.File[],
-    @Body() body: CreateResumeAnalysisDto,
-    @Headers('x-client-type') clientType: string,
-    @Req() req: Request,
-  ) {
-    let resumeLinks: string[] = [];
+  // 
+  
 
-    if (body.resumeLink && body.resumeLink.length > 0) {
-      resumeLinks = body.resumeLink.map((link) =>
-        this.convertToExportLink(link),
-      );
-    }
+async analyzeResume(
+  @UploadedFiles() files: Express.Multer.File[],
+  @Body() body: CreateResumeAnalysisDto,
+  @Headers('x-client-type') clientType: string,
+  @Req() req: Request,
+) {
+  let resumeLinks: string[] = [];
 
-    if ((!files || files.length === 0) && resumeLinks.length === 0) {
-      throw new BadRequestException(ResponseMessages.RESUME.MISSING_RESUME);
-    }
-
-    const result = await this.resumeAnalysisService.analyzeResumes(
-      {
-        description: body.description,
-        resumeLink: resumeLinks,
-        files,
-      },
-      req['user'].id,
+  if (body.resumeLink && body.resumeLink.length > 0) {
+    resumeLinks = body.resumeLink.map((link) =>
+      this.resumeAnalysisService.convertToExportLink(link),
     );
-
-    return { message: ResponseMessages.RESUME.ANALYSIS_SUCCESS, data: result };
   }
+
+  if ((!files || files.length === 0) && resumeLinks.length === 0) {
+    throw new BadRequestException(ResponseMessages.RESUME.MISSING_RESUME);
+  }
+
+  const result = await this.resumeAnalysisService.analyzeResumes(
+    {
+      description: body.description,
+      resumeLink: resumeLinks,
+      files,
+    },
+    req['user'].id,
+  );
+
+  return {
+    message: ResponseMessages.RESUME.ANALYSIS_SUCCESS,
+    data: result,
+  };
+}
+
+
 
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
@@ -306,21 +337,21 @@ export class ResumeAnalysisController {
     return this.resumeAnalysisService.getResumeAnalyses(req['user'].id);
   }
 
-  private convertToExportLink(link: string): string {
-    if (link.includes('drive.google.com')) {
-      const match = link.match(GOOGLE_REGEX.DRIVE_FILE);
-      if (match) {
-        return GOOGLE_URLS.DRIVE_EXPORT(match[1]);
-      }
-    }
-    if (link.includes('docs.google.com/document')) {
-      const match = link.match(GOOGLE_REGEX.DOC_FILE);
-      if (match) {
-        return GOOGLE_URLS.DOC_EXPORT(match[1]);
-      }
-    }
-    return link;
-  }
+//   private convertToExportLink(link: string): string {
+//     if (link.includes('drive.google.com')) {
+//       const match = link.match(GOOGLE_REGEX.DRIVE_FILE);
+//       if (match) {
+//         return GOOGLE_URLS.DRIVE_EXPORT(match[1]);
+//       }
+//     }
+//     if (link.includes('docs.google.com/document')) {
+//       const match = link.match(GOOGLE_REGEX.DOC_FILE);
+//       if (match) {
+//         return GOOGLE_URLS.DOC_EXPORT(match[1]);
+//       }
+//     }
+//     return link;
+//   }
 }
 
 @ApiTags('Client Profiling')
@@ -336,10 +367,9 @@ export class ClientProfilingController {
   @ApiResponse({ status: 500, description: 'Failed to generate profile.' })
   async createProfile(
     @Body() createMeetingDto: CreateMeetingDto,
-    @Req() req: Request, // optional: access request if needed
-    @Headers('x-client-type') clientType: string, // optional: access header
+    @Req() req: Request, 
+    @Headers('x-client-type') clientType: string, 
   ): Promise<ClientProfiling> {
-    // You can use req or clientType if needed
     return this.clientProfilingService.createProfile(createMeetingDto);
   }
 }
