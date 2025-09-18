@@ -39,7 +39,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       forbidUnknownValues: true,
-      transform: true,
+      transform: true, // This is the key change
       stopAtFirstError: false,
       errorHttpStatusCode: HttpStatus.BAD_REQUEST,
       exceptionFactory(errors) {

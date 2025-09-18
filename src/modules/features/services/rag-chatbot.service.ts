@@ -15,6 +15,8 @@ import { CreateConversationDto } from '../dto/create-conversation.dto';
 import { UserRole } from 'src/common/enums/role.enum';
 import { CreateMessageDto } from '../dto/create-message.dto';
 import { AiAgentApiService } from 'src/modules/http-service/http-service.service';
+import { RagEvaluation } from 'src/entities/rag-evaluation.entity';
+import { CreateRagEvaluationDto } from '../dto/create-rag-evaluation.dto';
 @Injectable()
 export class RagChatbotService {
   constructor(
@@ -26,9 +28,45 @@ export class RagChatbotService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Knowledge)
     private readonly knowledgeRepository: Repository<Knowledge>,
+    @InjectRepository(RagEvaluation)
+    private readonly ragEvaluationRepository: Repository<RagEvaluation>,
     private readonly uploaderService: UploaderService,
     private readonly aiAgentApiService: AiAgentApiService,
   ) {}
+
+  // Create RAG Evaluation
+  async createRagEvaluation(
+    createRagEvaluationDto: CreateRagEvaluationDto,
+  ): Promise<any> {
+    try {
+      const { query, answer, retrieved_contexts, reference } = createRagEvaluationDto;
+
+      // Call the Python service to get the evaluation
+      const evaluationResult = await this.aiAgentApiService.evaluateRag(
+        query,
+        answer,
+        retrieved_contexts,
+        reference,
+      );
+
+      const newEvaluation = this.ragEvaluationRepository.create({
+        query,
+        answer,
+        retrieved_contexts,
+        reference,
+        ...evaluationResult.evaluation,
+      });
+
+      await this.ragEvaluationRepository.save(newEvaluation);
+
+      return evaluationResult.evaluation;
+    } catch (error) {
+      console.error('Error creating RAG evaluation:', error);
+      throw new InternalServerErrorException(
+        'Failed to create RAG evaluation.',
+      );
+    }
+  }
 
   // Create Conversation
   async createConversation(

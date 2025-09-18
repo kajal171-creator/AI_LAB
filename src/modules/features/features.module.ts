@@ -20,6 +20,7 @@ import { TranslatorService } from './services/translator.service';
 import { Translation } from 'src/entities/translation.entity';
 import { ClientProfilingService } from './services/client-profiling.service';
 import { ClientProfiling } from 'src/entities/client-profiling.entity';
+import { RagEvaluation } from 'src/entities/rag-evaluation.entity';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ClientProfiling } from 'src/entities/client-profiling.entity';
       ResumeAnalysis,
       Translation,
       ClientProfiling,
+      RagEvaluation,
     ]),
     HttpServiceModule,
   ],

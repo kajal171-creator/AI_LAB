@@ -9,7 +9,7 @@ services:
     container_name: antino-ai-be
     restart: always
     ports:
-      - "7009:3000"
+      - "3000:3000"
     networks:
       - gmr-dpr-be_default
 

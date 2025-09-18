@@ -48,6 +48,7 @@ import { Translation } from 'src/entities/translation.entity';
 import { ClientProfilingService } from './services/client-profiling.service';
 import { CreateMeetingDto } from './dto/client-profiling.dto';
 import { ClientProfiling } from 'src/entities/client-profiling.entity';
+import { CreateRagEvaluationDto } from './dto/create-rag-evaluation.dto';
 
 const RESUME_ANALYZER_ENDPOINT = '/analyze-resumes';
 
@@ -70,7 +71,7 @@ export class FeaturesController {
   ): Promise<string> {
     return this.ragChatService.createConversation(body, req['user'].id);
   }
-
+           
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
   @Get('all-conversation')
@@ -84,6 +85,23 @@ export class FeaturesController {
     @Headers('x-client-type') clientType: string,
   ): Promise<Conversation[]> {
     return this.ragChatService.getAllConversations(req['user'].id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @Post('/evaluate')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBody({ type: CreateRagEvaluationDto })
+  @ApiResponse({
+    status: 201,
+    description: 'RAG evaluation created successfully.',
+  })
+  async createRagEvaluation(
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+    @Body() createRagEvaluationDto: CreateRagEvaluationDto,
+  ) {
+    return this.ragChatService.createRagEvaluation(createRagEvaluationDto);
   }
 
   // @UseGuards(ClientAuthGuard)

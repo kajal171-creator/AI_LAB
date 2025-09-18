@@ -12,6 +12,7 @@ import {
   RESUME_ANALYZER_ENDPOINT,
   TRANSLATION_ENDPOINT,
   CLIENT_PROFILE_ENDPOINT,
+  RAG_EVALUATION_ENDPOINT,
 } from 'src/common/constants/endpoints';
 import { console } from 'inspector';
 import { AiModelType } from 'src/common/enums/role.enum';
@@ -83,6 +84,43 @@ export class AiAgentApiService {
         error.response?.data || error.message,
       );
       throw new InternalServerErrorException('AI chat with PDF failed');
+    }
+  }
+
+  async evaluateRag(
+    query: string,
+    answer: string,
+    retrieved_contexts: string[],
+    reference: string,
+  ): Promise<any> {
+    const payload = {
+      query,
+      answer,
+      retrieved_contexts,
+      reference,
+    };
+    const PYTHON_BASE_URI = process.env.PYTHON_BASE_URI;
+
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(
+          `${PYTHON_BASE_URI}${RAG_EVALUATION_ENDPOINT}`,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        'Error in evaluateRag:',
+        error.response?.data || error.message,
+      );
+      throw new InternalServerErrorException('RAG evaluation failed');
     }
   }
 
