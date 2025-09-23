@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM node:20-alpine AS base
 WORKDIR /app
 ENV NODE_ENV=production
@@ -18,15 +16,7 @@ RUN npm run build
 FROM base AS runner
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
+RUN apk add --no-cache curl bash ca-certificates
 COPY --from=builder /app/dist ./dist
-
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
-FROM node:18-alpine
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["npm", "run", "start:dev"]
-
