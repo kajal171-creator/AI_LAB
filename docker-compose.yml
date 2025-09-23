@@ -7,12 +7,13 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: antino-ai-be
+    env_file:
+      - .env.dev
     restart: always
     ports:
-      - "3000:3000"
+      - "7009:3000"
     networks:
       - gmr-dpr-be_default
-
 networks:
   gmr-dpr-be_default:
     external: true
