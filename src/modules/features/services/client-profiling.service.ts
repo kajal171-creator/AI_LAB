@@ -35,4 +35,9 @@ export class ClientProfilingService {
 
     return this.profileRepository.save(newProfile);
   }
+
+  async getBriefs(): Promise<ClientProfiling[]> {
+    this.logger.log('Fetching all client profiles from the database.');
+    return this.profileRepository.find();
+  }
 }

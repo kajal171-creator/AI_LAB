@@ -11,7 +11,8 @@ import {
   UploadedFiles,
   Req,
   BadRequestException,
-  Res
+  Res,
+  Query,
 } from '@nestjs/common';
 import { RagChatbotService } from './services/rag-chatbot.service';
 import { CreateRagChatDto } from './dto/rag-chat.dto';
@@ -377,6 +378,19 @@ async analyzeResume(
 export class ClientProfilingController {
   constructor(private readonly clientProfilingService: ClientProfilingService) {}
 
+  @Get('briefs')
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({ status: 200, description: 'Successfully retrieved all briefs.', type: [ClientProfiling] })
+  @ApiResponse({ status: 500, description: 'Failed to retrieve briefs.' })
+  async getBriefs(
+    @Req() req: Request, 
+    @Headers('x-client-type') clientType: string, 
+  ): Promise<ClientProfiling[]> {
+    return this.clientProfilingService.getBriefs();
+  }
+
   @Post('generate-brief')
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
@@ -390,5 +404,6 @@ export class ClientProfilingController {
   ): Promise<ClientProfiling> {
     return this.clientProfilingService.createProfile(createMeetingDto);
   }
+
 }
 
