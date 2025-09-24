@@ -13,6 +13,7 @@ import {
   BadRequestException,
   Res,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { RagChatbotService } from './services/rag-chatbot.service';
 import { CreateRagChatDto } from './dto/rag-chat.dto';
@@ -391,6 +392,31 @@ export class ClientProfilingController {
     return this.clientProfilingService.getBriefs();
   }
 
+  @Patch('briefs/:id/bookmark')
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({ status: 200, description: 'Successfully updated bookmark status.', type: ClientProfiling })
+  async bookmarkBrief(
+    @Param('id') id: number,
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+  ): Promise<ClientProfiling> {
+    return this.clientProfilingService.bookmarkBrief(id);
+  }
+
+  @Get('briefs/bookmarked')
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({ status: 200, description: 'Successfully retrieved all bookmarked briefs.', type: [ClientProfiling] })
+  async getBookmarkedBriefs(
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+  ): Promise<ClientProfiling[]> {
+    return this.clientProfilingService.getBookmarkedBriefs();
+  }
+
   @Post('generate-brief')
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
@@ -404,6 +430,5 @@ export class ClientProfilingController {
   ): Promise<ClientProfiling> {
     return this.clientProfilingService.createProfile(createMeetingDto);
   }
-
 }
 

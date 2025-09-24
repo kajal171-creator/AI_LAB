@@ -13,7 +13,7 @@ export class ClientProfiling {
 
   @Column()
   attendee_name: string;
-
+  
   @Column()
   title: string;
 
@@ -72,4 +72,10 @@ export class ClientProfiling {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'jsonb', nullable: true })
+  suggested_profile: any;
+
+  @Column({ default: false })
+  isBookmarked: boolean;
 }

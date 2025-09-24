@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientProfiling } from '../../../entities/client-profiling.entity';
@@ -39,5 +39,20 @@ export class ClientProfilingService {
   async getBriefs(): Promise<ClientProfiling[]> {
     this.logger.log('Fetching all client profiles from the database.');
     return this.profileRepository.find();
+  }
+
+  async bookmarkBrief(id: number): Promise<ClientProfiling> {
+    const brief = await this.profileRepository.findOne({ where: { id } });
+
+    if (!brief) {
+      throw new NotFoundException(`Brief with ID ${id} not found.`);
+    }
+
+    brief.isBookmarked = !brief.isBookmarked; // Toggle the bookmark status
+    return this.profileRepository.save(brief);
+  }
+
+  async getBookmarkedBriefs(): Promise<ClientProfiling[]> {
+    return this.profileRepository.find({ where: { isBookmarked: true } });
   }
 }
