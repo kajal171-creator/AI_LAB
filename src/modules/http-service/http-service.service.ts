@@ -13,10 +13,13 @@ import {
   TRANSLATION_ENDPOINT,
   CLIENT_PROFILE_ENDPOINT,
   RAG_EVALUATION_ENDPOINT,
+  STOCK_AGENT_ENDPOINT
 } from 'src/common/constants/endpoints';
 import { console } from 'inspector';
 import { AiModelType } from 'src/common/enums/role.enum';
 import { CreateMeetingDto } from '../features/dto/client-profiling.dto';
+import { CreateRunDto } from '../features/dto/stock-agent.dto';
+import { error } from 'console';
 //const PYTHON_BASE_URI = process.env.PYTHON_BASE_URI;
 
 @Injectable()
@@ -315,4 +318,37 @@ async generateClientProfile(createDto: CreateMeetingDto) {
       throw new InternalServerErrorException('Client profiling failed');
     }
   }
+
+
+
+async runStockAnalysis(stockDto: CreateRunDto) {
+    try {
+      const url = `${process.env.STOCK_AGENT_PYTHON_URI}${STOCK_AGENT_ENDPOINT}`;
+
+      this.logger.debug(`Sending stock analysis request to Python API at ${url}`);
+      this.logger.debug(`Request body -> ${JSON.stringify(stockDto)}`);
+
+      const response = await lastValueFrom(
+        this.httpService.post(url, stockDto, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 600000,
+        }),
+      );
+
+      this.logger.debug('StockAgent: Response received from Python API.');
+      this.logger.debug(`Python API response: ${JSON.stringify(response.data)}`);
+
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        this.logger.error(
+          `Stock analysis failed. Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
+        );
+      }
+       else {
+        this.logger.error(`Stock analysis failed. Error: ${error.message}`, error.stack);
+      }
+      throw new InternalServerErrorException('Stock analysis failed');
+    }
+}
 }

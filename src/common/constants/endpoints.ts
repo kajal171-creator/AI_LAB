@@ -5,3 +5,4 @@ export const RESUME_ANALYZER_ENDPOINT = '/analyze-resume';
 export const TRANSLATION_ENDPOINT = '/translate';
 export const CLIENT_PROFILE_ENDPOINT = '/generate-brief';
 export const RAG_EVALUATION_ENDPOINT = '/chat/evaluate/';
+export const STOCK_AGENT_ENDPOINT = '/run';

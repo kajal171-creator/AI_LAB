@@ -51,6 +51,8 @@ import { ClientProfilingService } from './services/client-profiling.service';
 import { CreateMeetingDto } from './dto/client-profiling.dto';
 import { ClientProfiling } from 'src/entities/client-profiling.entity';
 import { CreateRagEvaluationDto } from './dto/create-rag-evaluation.dto';
+import { RunService } from './services/stock-agent.service';
+import { CreateRunDto } from './dto/stock-agent.dto';
 
 const RESUME_ANALYZER_ENDPOINT = '/analyze-resumes';
 
@@ -432,3 +434,29 @@ export class ClientProfilingController {
   }
 }
 
+
+
+//Stock agent controller ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+@ApiTags('Stock Agent')
+@Controller('run')
+export class RunController {
+  constructor(private readonly runService: RunService) {}
+
+  @ApiBearerAuth()
+  @UseGuards(ClientAuthGuard)
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBody({ type: CreateRunDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Run created successfully.',
+  })
+  async createRun(
+    @Req() req: Request,
+    @Headers('x-client-type') clientType: string,
+    @Body() createRunDto: CreateRunDto,
+  ) {
+     return this.runService.create(createRunDto);
+  }
+}

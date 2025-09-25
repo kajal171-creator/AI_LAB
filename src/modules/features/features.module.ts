@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ClientProfilingController, FeaturesController,ResumeAnalysisController } from './features.controller';
+import { ClientProfilingController, FeaturesController,ResumeAnalysisController, RunController } from './features.controller';
 import { ImageGeneratorService } from './services/image-generator.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ImageGenerationHistory } from 'src/entities/image-generation.history.entity';
@@ -21,6 +21,8 @@ import { Translation } from 'src/entities/translation.entity';
 import { ClientProfilingService } from './services/client-profiling.service';
 import { ClientProfiling } from 'src/entities/client-profiling.entity';
 import { RagEvaluation } from 'src/entities/rag-evaluation.entity';
+import { Run } from 'src/entities/stock-agent.entity';
+import { RunService } from './services/stock-agent.service';
 
 @Module({
   imports: [
@@ -44,10 +46,11 @@ import { RagEvaluation } from 'src/entities/rag-evaluation.entity';
       Translation,
       ClientProfiling,
       RagEvaluation,
+      Run,
     ]),
     HttpServiceModule,
   ],
-  controllers: [FeaturesController, ResumeAnalysisController,ClientProfilingController],
+  controllers: [FeaturesController, ResumeAnalysisController,ClientProfilingController,RunController],
   providers: [
     ImageGeneratorService,
     UploaderService,
@@ -56,7 +59,8 @@ import { RagEvaluation } from 'src/entities/rag-evaluation.entity';
     JwtHelper,
     ResumeAnalysisService,
     ClientProfilingService,
-    TranslatorService
+    TranslatorService,
+    RunService,
   ],
 })
 export class FeaturesModule {}
