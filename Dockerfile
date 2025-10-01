@@ -16,7 +16,7 @@ RUN npm run build
 FROM base AS runner
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
-RUN apk add --no-cache curl bash ca-certificates
+RUN apk add --no-cache curl bash 
 COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
