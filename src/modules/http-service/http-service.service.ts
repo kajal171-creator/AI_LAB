@@ -331,7 +331,7 @@ async runStockAnalysis(stockDto: CreateRunDto) {
       const response = await lastValueFrom(
         this.httpService.post(url, stockDto, {
           headers: { 'Content-Type': 'application/json' },
-          timeout: 600000,
+          timeout: 1000000,
         }),
       );
 

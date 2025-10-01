@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column} from 'typeorm';
+import { BaseEntity } from 'src/common/database/sm-base.entity';
 
 @Entity('runs')
-export class Run {
+export class Run extends BaseEntity{
   @PrimaryGeneratedColumn()
   run_id: number;
 
