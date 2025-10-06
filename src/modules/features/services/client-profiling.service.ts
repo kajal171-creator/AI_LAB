@@ -28,7 +28,7 @@ export class ClientProfilingService {
 
     const newProfile = this.profileRepository.create({
       ...createDto,
-    ...(brief as Record<string, any>),
+      ...(brief as Record<string, any>),
       meeting_date: createDto.meeting_date ? new Date(createDto.meeting_date) : null,
       generated_at: brief.generated_at ? new Date(brief.generated_at) : new Date(),
     });

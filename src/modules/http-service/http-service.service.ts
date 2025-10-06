@@ -312,13 +312,13 @@ async generateClientProfile(createDto: CreateMeetingDto) {
           `Client profiling failed. Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`
         );
       } else {
-        this.logger.error(`Client profiling failed. Error: ${error.message}`, error.stack);
+         this.logger.error(`Client profiling failed. Error: ${error.message}`, error.stack);
       }
-
+      
       throw new InternalServerErrorException('Client profiling failed');
     }
   }
-
+  
 
 
 async runStockAnalysis(stockDto: CreateRunDto) {

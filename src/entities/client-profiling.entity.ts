@@ -55,8 +55,16 @@ export class ClientProfiling {
   @Column({ type: 'text', array: true, nullable: true })
   connection_opportunities: string[];
 
+  // @Column({ type: 'jsonb', nullable: true })
+  // data_sources: Record<string, boolean>;
+
   @Column({ type: 'jsonb', nullable: true })
-  data_sources: Record<string, boolean>;
+  data_sources: {
+    linkedin?: { found: boolean; link?: string };
+    company_website?: { found: boolean; link?: string };
+    news_articles?: { found: boolean; links?: string[] };
+    [key: string]: any;
+  };
 
   @Column({ type: 'jsonb', nullable: true })
   scraping_summary: Record<string, number>;
