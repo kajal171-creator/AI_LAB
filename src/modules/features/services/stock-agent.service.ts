@@ -24,9 +24,7 @@ export class RunService {
     return this.runRepository.save(run);
     }
 
-  
-
-  async getTickerActivitySummary(): Promise<{ ticker: string; buys: number; sells: number }[]> {
+  async getDailyActivitySummary(): Promise<{ date: string; buys: number; sells: number }[]> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -34,31 +32,40 @@ export class RunService {
       where: {
         createdAt: MoreThan(thirtyDaysAgo),
       },
+      order: {
+        createdAt: 'ASC',
+      },
     });
 
-    const tickerSummary: { [key: string]: { buys: number; sells: number } } = {};
+    const dailySummary: { [key: string]: { buys: number; sells: number } } = {};
 
     for (const run of runs) {
+
+      const date = new Date(run.createdAt).toISOString().split('T')[0]; // Get YYYY-MM-DD
+      if (!dailySummary[date]) {
+        dailySummary[date] = { buys: 0, sells: 0 };
+      }
+
       if (run.decisions && typeof run.decisions === 'object') {
         for (const ticker in run.decisions) {
-          if (!tickerSummary[ticker]) {
-            tickerSummary[ticker] = { buys: 0, sells: 0 };
-          }
           const decision = run.decisions[ticker];
-          if (decision?.label?.toUpperCase() === 'BUY') {
-            tickerSummary[ticker].buys++;
-          } else if (decision?.label?.toUpperCase() === 'SELL') {
-            tickerSummary[ticker].sells++;
+          if (decision && typeof decision.label === 'string') {
+            if (decision.label.toUpperCase() === 'BUY') {
+              dailySummary[date].buys++;
+            } else if (decision.label.toUpperCase() === 'SELL') {
+              dailySummary[date].sells++;
+            }
           }
         }
       }
     }
 
     // Convert the summary object to an array for the response
-    return Object.keys(tickerSummary).map(ticker => ({
-      ticker,
-      buys: tickerSummary[ticker].buys,
-      sells: tickerSummary[ticker].sells,
+    return Object.keys(dailySummary).map(date => ({
+      date,
+      buys: dailySummary[date].buys,
+      sells: dailySummary[date].sells,
     }));
   }
 }
+

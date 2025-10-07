@@ -37,8 +37,11 @@ export class ClientProfiling {
   @Column({ type: 'jsonb', nullable: true })
   prospect_info: Record<string, string>;
 
-  @Column({ type: 'text', array: true, nullable: true })
-  key_pitch_points: string[];
+  // @Column({ type: 'text', array: true, nullable: true })
+  // key_pitch_points: string[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  key_pitch_points: Record<string, any>[];
 
   @Column({ type: 'text', array: true, nullable: true })
   background_education: string[];

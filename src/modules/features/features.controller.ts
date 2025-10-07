@@ -460,35 +460,19 @@ export class RunController {
      return this.runService.create(createRunDto);
   }
 
-  // @ApiBearerAuth()
-  // @UseGuards(ClientAuthGuard)
-  // @Get('summary')
-  // @HttpCode(HttpStatus.OK)
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Daily activity summary for the last 30 days.',
-  //   // You might want to create a DTO for this response shape
-  // })
-  // async getDailyActivitySummary(
-  //   @Req() req: Request,
-  //   @Headers('x-client-type') clientType: string,
-  // ) {
-  //   return this.runService.getDailyActivitySummary();
-  // }
-
   @ApiBearerAuth()
   @UseGuards(ClientAuthGuard)
-  @Get('summary/by-ticker')
+  @Get('summary')
   @HttpCode(HttpStatus.OK)
   @ApiResponse({
     status: 200,
-    description: 'Ticker activity summary for the last 30 days.',
-    
+    description: 'Daily activity summary for the last 30 days.',
+    // You might want to create a DTO for this response shape
   })
-  async getTickerActivitySummary(
+  async getDailyActivitySummary(
     @Req() req: Request,
     @Headers('x-client-type') clientType: string,
   ) {
-    return this.runService.getTickerActivitySummary();
+    return this.runService.getDailyActivitySummary();
   }
 }
