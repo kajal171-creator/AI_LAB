@@ -11,14 +11,24 @@ AI_LAB is a full-stack AI project consisting of multiple services: **RAG (Retrie
 - Client Profiling gathers professional information from LinkedIn and social media.
 
 ## Demo
-[Watch AI_LAB Demo](https://www.loom.com/share/c3fbd28602ca4ef697eddd17059bf823)
+[Watch AI_LAB Demo]
+(https://www.loom.com/share/c3fbd28602ca4ef697eddd17059bf823)
 
-![Extra](screenshots/Front.png)
+## Screenshots
+## Front Page
+![Front](screenshots/Front.png)
+
+### RAG Module
 ![RAG](screenshots/Rag.png)
-![Translation](screenshots/Translation.png)
-![Resume Analyzer](screenshots/Resume.png)
-![Client Profiling](screenshots/Client.png)
 
+### Translation Module
+![Translation](screenshots/Translation.png)
+
+### Resume Analyzer
+![Resume Analyzer](screenshots/Resume.png)
+
+### Client Profiling
+![Client Profiling](screenshots/Client.png)
 
 ## Installation
 
@@ -58,7 +68,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 ## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
+-  Author: [Kajal Mehra] [https://github.com/kajal171-creator/AI_LAB]
 - Website - [https://nestjs.com](https://nestjs.com/)
 - Twitter - [@nestframework](https://twitter.com/nestframework)
 
