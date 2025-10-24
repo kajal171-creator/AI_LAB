@@ -13,20 +13,11 @@ AI_LAB is a full-stack AI project consisting of multiple services: **RAG (Retrie
 ## Demo
 [Watch AI_LAB Demo](https://www.loom.com/share/c3fbd28602ca4ef697eddd17059bf823)
 
-### RAG Module
-![RAG](screenshots/Screenshot\(1\).png)
-
-### Translation Module
-![Translation](screenshots/Screenshot\(2\).png)
-
-### Resume Analyzer
-![Resume Analyzer](screenshots/Screenshot\(3\).png)
-
-### Client Profiling
-![Client Profiling](screenshots/Screenshot\(4\).png)
-
-### Extra Module / Images
-![Extra](screenshots/Screenshot\(5\).png)
+![Extra](screenshots/Front.png)
+![RAG](screenshots/Rag.png)
+![Translation](screenshots/Translation.png)
+![Resume Analyzer](screenshots/Resume.png)
+![Client Profiling](screenshots/Client.png)
 
 
 ## Installation
