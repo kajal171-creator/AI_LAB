@@ -1,22 +1,33 @@
-[Watch AI_LAB Demo](https://www.loom.com/share/c3fbd28602ca4ef697eddd17059bf823)
-
-## Screenshots
-
-### RAG Module
-![RAG](screenshots/Screenshot(2).png)
-
-### Translation Module
-![Translation](screenshots/Screenshot(3).png)
-
-### Resume Analyzer
-![Resume Analyzer](screenshots/Screenshot(4).png)
-
-### Client Profiling
-![Client Profiling](screenshots/Screenshot(5).png)
+# AI_LAB Project
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+AI_LAB is a full-stack AI project consisting of multiple services: **RAG (Retrieval-Augmented Generation)**, **Translation**, **Resume Analyzer**, and **Client Profiling**.  
+
+- Node.js backend acts as a mediator between React frontend and Python AI services.  
+- RAG module allows uploading multiple PDFs and provides interactive Q&A.  
+- Translation service supports multi-language text translation.  
+- Resume Analyzer processes PDF, Google Drive, and local resumes, extracting name, skills, ATS score, and other insights.  
+- Client Profiling gathers professional information from LinkedIn and social media.
+
+## Demo
+[Watch AI_LAB Demo](https://www.loom.com/share/c3fbd28602ca4ef697eddd17059bf823)
+
+### RAG Module
+![RAG](screenshots/Screenshot\(1\).png)
+
+### Translation Module
+![Translation](screenshots/Screenshot\(2\).png)
+
+### Resume Analyzer
+![Resume Analyzer](screenshots/Screenshot\(3\).png)
+
+### Client Profiling
+![Client Profiling](screenshots/Screenshot\(4\).png)
+
+### Extra Module / Images
+![Extra](screenshots/Screenshot\(5\).png)
+
 
 ## Installation
 
